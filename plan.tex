@@ -1,0 +1,140 @@
+\documentclass[11pt,a4paper]{article}
+
+
+% To set margin width, text height, space for footnotes and all sorts
+% of other settings related to the geometry of the pages in your
+% report, use the 'geometry' package. 
+%
+% http://tug.ctan.org/cgi-bin/ctanPackageInformation.py?id=geometry
+
+\usepackage[margin=2cm]{geometry}
+
+
+% For inclusion of figures, use the 'graphicx' package. This allows
+% you to later include a figure using '\includegraphics{filename}' and
+% it will also for simple sizing of the figure in your text.
+%
+% http://tug.ctan.org/cgi-bin/ctanPackageInformation.py?id=graphicx
+
+\usepackage{graphicx}
+
+
+% You may want to add hyperlinks to your document, which can be tricky
+% to typeset because they often have weird symbols in them which LaTeX
+% interprets in its own way. Use 'hyperref' for this. It also has many
+% options to add e.g. a list of thumbnails to your pdf file.
+%
+% http://tug.ctan.org/cgi-bin/ctanPackageInformation.py?id=hyperref
+
+\usepackage{hyperref}
+
+
+
+% Finally, for various useful tools for mathematics typesetting, use
+% the 'amsmath' package with a few assorted companion packages which
+% provide extra symbols.
+%
+% http://tug.ctan.org/cgi-bin/ctanPackageInformation.py?id=amsmath
+% http://tug.ctan.org/cgi-bin/ctanPackageInformation.py?id=amssymb
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% For figure/table caption settings.
+
+%\usepackage{varwidth}
+%\usepackage[noonelinecaption=true]{caption}
+
+\usepackage{enumitem}
+
+
+\begin{document}
+
+% The 'article' document class provides a simple way to make a title
+% page: 
+
+\title{Report Plan}
+\author{Joel Biffin}
+\maketitle
+
+% A table of contents can be generated automatically as well:
+
+% \tableofcontents
+
+
+% Now comes the true content. 
+
+\section{Background}
+
+\begin{itemize}
+  \item{Definition of IVPs (standard 1st order form).}
+  \item{Where they come from (modelling natural phenomena).}
+  \item{Reducing nth order IVPs to standard (vector) form.}
+  \item{How evolutionary problems modelled by PDEs can be reduced to discretised IVPs.}
+\end{itemize}
+
+\section{Numerical Methods}
+
+\begin{itemize}
+  \item{One-step methods, explicit vs implicit.}
+  \item{Local truncation error and the order of a method.}
+  \item{Stability: region of stability, A-stability and L-stability.}
+  \item{Runge-Kutta methods.}
+  \item{Linear multi-step methods: Adams’, BDF, Nystrom.}
+  \item{Predictor corrector methods and pairings.}
+  \item{Variable time-mesh.}
+\end{itemize}
+
+\section{Software Design}
+
+\begin{itemize}
+  \item{Choice of python and numpy.}
+  \item{Why choose to use object-oriented framework (future considerations).}
+  \item{Briefly discuss design using UML.}
+  \item{Difficulties that this presented in development.}
+  \item{Graphing results (very brief).}
+\end{itemize}
+
+\section{Analysis of Numerical Methods}
+
+\begin{itemize}
+  \item Use scalar examples to demonstrate stability, stiffness and natural characteristics of each method.
+     \begin{itemize}[label=$\star$]
+        \item Non-stiff example, showing Forward Euler method vs Adams-Bashforth method with same step-size – graph Local truncation errors too.
+        \item Stiff example, showing Forward Euler vs Backward Euler with multiple step-sizes (emphasising region of stability).
+        \item Stiff example, similarly for Adams-Bashforth vs Adams-Moulton.
+        \item Stiff example, show Adams-Moulton vs BDF2 – graph local truncation errors.
+     \end{itemize}
+  \item Showing comparison of predictor-corrector pairings with fixed mesh – graph local truncation errors.
+    \begin{itemize}[label=$\star$]
+      \item Plot graph of step-sizes against local-truncation errors.
+    \end{itemize}
+  \item Showing comparison of predictor-corrector pairings with variable mesh.
+    \begin{itemize}[label=$\star$]
+      \item Demonstrate how milne’s device is used with set tol and its impact on accuracy and stability of methods.
+    \end{itemize}
+\end{itemize}
+
+\section{Case Studies}
+
+\begin{itemize}
+  \item Single pendulum (no damping-simple harmonic motion).
+    \begin{itemize}[label=$\star$]
+      \item Demonstrate natural damping feature of fixed step Forward-Backward Euler predictor-corrector, vs Adams-Bashforth-Moulton-2 predictor corrector (no damping).
+    \end{itemize}
+  \item Damped single pendulum.
+  \item Damped forced pendulum.
+  \item Double pendulum (chaotic motion).
+\end{itemize} 
+
+
+\section{Future Development}
+
+\begin{itemize}
+  \item Choice of step-size update function and local truncation error estimate in predictor-corrector (limitations to Milne’s device).
+  \item Refactoring code to use Generalised LMMs and k-step BDF methods with variable coefficients so that the order of methods can be updated on-the-fly dependent on local truncation error estimates.
+  \item Refactoring code to not store the entirety of results in memory – automated garbage collection or saving to disc. 
+\end{itemize}
+
+
+\end{document}

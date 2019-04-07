@@ -1,0 +1,9 @@
+*.py
+*.aux
+*.log
+*.out
+*.docx
+*.toc
+short-math-guide.pdf
+/_minted-report/*
+/_minted-report

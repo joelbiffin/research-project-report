@@ -1,0 +1,379 @@
+\documentclass[12pt, twoside]{report}
+
+\usepackage[a4paper, margin=1.5cm]{geometry}
+
+\usepackage{minted}
+\setminted[python]{autogobble=true}
+\usemintedstyle{xcode}
+
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{20pt}{20pt}
+\titleformat{\chapter }[display]{\normalfont\huge\bfseries}{\chaptertitlename\
+\thechapter}{20pt}{\Huge}
+
+
+\usepackage{graphicx}
+
+\usepackage{hyperref}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+
+\providecommand{\abs}[1]{\lvert#1\rvert}
+\providecommand{\norm}[1]{\lVert#1\rVert}
+
+\begin{document}
+
+% The 'article' document class provides a simple way to make a title
+% page: 
+
+\title{
+    \large{Numerical Solution to the Initial Value Problem by a 
+    Predictor-Corrector Method:}\\
+    Applications to n-Body Problem and Pendula}
+\author{Joel Biffin}
+\maketitle
+
+% A table of contents can be generated automatically as well:
+
+\tableofcontents
+
+
+\begin{abstract}
+
+    Initial Value Problems primarily arise from the modelling of natural
+    phenomena where often we are able to desribe some quantity's rate of change
+    as a function of itself coupled with time. This report will focus on
+    Initial Value Problems arising from models using Ordinary Differential
+    Equations. It is notable that many of the breakthroughs in the field of
+    solving Partial Differential Equations have arisen from spacially
+    discretising the problem and approximating solutions to the discretised
+    Initial Value Problem.
+
+    Leibniz and Newton are often cited as the fathers of the field of
+    differential equations. Similar to Newton, in this report we will be
+    considering quantities which change with respect to time, but all of the
+    methods and analyses apply for any other variable too. 
+
+    Until the late 19th century, numerical algorithms to approximate solutions
+    to Initial Value Problems could not usefully be applied. Since then
+    contributions from Adams, Milne, Butcher and Gear (to name a few) have been
+    used in computations an unimaginable number of times as a result of now 
+    readily available computing power. 
+
+    In this report, established methods will be analysed and reviewed 
+    comparatively in terms of implementation complexity, computational cost
+    and accuracy.
+
+\end{abstract}
+
+
+% Now comes the true content. 
+
+\chapter{Background}
+    
+    \section{Notation}
+    \label{1_notation}
+        Throughout this report, vector quantities and functions will be written
+        in lowercase bold type ($\mathbf{u}, \mathbf{f}$), scalar quantities 
+        and functions will be written in lowercase type ($t, f$), and iterative
+        schemes will use subscripting to represent the $i$-th iteration 
+        ($u_{i}, \mathbf{u}_i$) of a method. Generally, vector quantities will
+        be expressed as such rather than element-wise, unless otherwise stated.
+
+
+    \section{Initial Value Problems}
+    \label{1_notation}
+        An Initial Value Problem (IVP) can generally be written in the form,
+        \begin{equation}
+        \label{eq:ivp}
+            \begin{split}
+                \frac{d \mathbf{u}(t)}{dt}& = \mathbf{f}(t, \mathbf{u}), 
+                \quad t \in [a, b]\\
+                \mathbf{u}(a)& = \mathbf{u}_0, \quad \text{(given)},
+            \end{split}
+        \end{equation}
+        using vector quantities. It is worth noting that this is in the form of
+        a 1st order system of differential equations, this is due to the fact 
+        we can reduce any $n$-th order equation to a system of first order ones
+        (see section ).
+
+
+    \section{Where Do They Come From?}
+    \label{1_notation}
+        As discussed in the abstract, IVPs often arise from, but are not
+        restricted to, the modelling of natural phenomena. 
+
+        Newton's 2nd Law of Motion describes the proportionality of the rate 
+        of change of velocity to the resultant force acting on a body. This 
+        coupled with an initial condition $\mathbf{v}(a)=\mathbf{v}_0$, gives
+        an IVP. In electrical circuit modelling, the flow of charge $q$ from a
+        capacitor of known initial charge $q(0)=q_0$ can too be modelled by an 
+        IVP in the form of \eqref{eq:ivp}.
+
+
+    \section{Existence \& Uniqueness of Solutions}
+    \label{1_notation}
+        Before discussing methods used to approximate solutions to IVPs, it is
+        important to ascertain whether solutions do in fact exist and, if so,
+        whether or not they are unique. We will use Lipschitz continuity to do
+        so.
+        \begin{theorem}
+            Let $f(t,u)$ be a continuous function for all $u$ and $t \in 
+            [a, b]$, and suppose that $f$ satisfies the Lipschitz condition,
+            \begin{equation}
+            \label{eq:lipschitz}
+                \abs{f(t,v)-f(t,w)} \le L\abs{v-w},
+                \quad \forall v, w \text{ and } t \in [a,b].
+            \end{equation}
+            Then, for any $u_0$ there exists a unique continuously
+            differentiable function $u(t)$ defined on $[a,b]$ satisfying
+            \eqref{eq:ivp}.
+        \end{theorem}
+        This result is incredibly important when modelling environments and 
+        phenomena. If a model equation does not satisfy our Lipschitz condition
+        this is a real indicator of whether or not our model correctly 
+        represents our system.
+
+        For the remainder of this report we will be concerned with problems 
+        which do satisfy our Lipschitz condition \eqref{eq:lipschitz}.
+
+
+    \section{Analytical Methods vs Numerical Methods}
+    \label{l_analytical_numerical}
+        Analytical methods can be used to solve IVPs but only for a very limited
+        number of special cases. In terms of computing, there are a number of 
+        software packages that are able to solve these differential equations
+        symbolically (for example, MATLAB's `MuPAD'). Since it is the case that
+        the majority of ordinary differential equations cannot by solved 
+        analytically, these algorithms are of little use (and it's worth noting
+        that these algorithms are notoriously costly).
+
+        This inability to analytically find solutions led to the discussion of
+        numerical methods to approximate solutions to IVPs at a specific $t$. 
+        The general approach for these numerical methods begins with 
+        discretising our independent variable $t$ into a mesh. This mesh is an 
+        increasing monotonic sequence of time values ${\lbrace 
+        t_i\rbrace}_{i=0}^n$, where $[a,b]$ has been split into $n$ (not 
+        necessarily equally spaced) intervals such that $a=t_0$ and $b=t_n$.
+
+        In practice, numerical methods are the best approach to finding 
+        solutions to IVPs and when used appropriately they produce incredibly 
+        useful results to equations that we would otherwise be unable to solve.
+
+        In the next chapter we will be discussing what it is that makes a 
+        numerical algorithm appropriate for a given problem. We will also be
+        investigating the accuracy of our approximations.
+
+
+
+\chapter{Numerical Methods}
+
+    Algorithms which approximate solutions to \eqref{eq:ivp} fall into three
+    categories: Taylor Series methods, Linear Multistep Methods (LMMs) and 
+    Runge-Kutta methods. It can be viewed that all three of these families are
+    generalisations of Euler's Method \ref{2_forward_euler}. 
+
+    The focus of this project primarily lies with Linear Multistep Methods and 
+    using them in the form of a predictor-corrector pair. Runge-Kutta methods
+    are too used and evaluated here, but are only featured in case studies
+    as starting schemes for LMMs.
+
+    For the purposes of software design we have classified Euler's Method as a
+    One-Step method, and similarly Runge-Kutta methods are classified as 
+    One-Step methods too. Unless explicitly stated, all methods will use a 
+    fixed step-size $h=\frac{b-a}{n}$ (where $n$ is the number of time 
+    intervals) producing an equidistant mesh.
+
+    \section{One-Step Methods}
+    \label{2_onestep}
+        
+        \subsection{(Forward) Euler's Method}
+        \label{2_forward_euler}
+            Euler's method is given by the iterative scheme,
+            \begin{equation}
+            \label{eq:euler}
+                \mathbf{u}_{i+1} = \mathbf{u}_i + h\mathbf{f}(t_i, 
+                \mathbf{u}_i).
+            \end{equation}
+            This scheme is \textit{explicit} since we can calculate 
+            $\mathbf{u}_{i+1}$ using a combination of $\mathbf{u}_i$ and $t_i$
+            which are known at the start of this iteration.
+
+            \begin{definition}
+                An iterative scheme is \textbf{implicit} if $\mathbf{u}_{i+1}$
+                is expressed in terms of itself and other variables. If a 
+                scheme is expressed only in terms of other variables, then it
+                is \textbf{explicit}. 
+            \end{definition}
+
+            We will discuss later on how the explicit nature of the method
+            impacts the stability of a numerical algorithm.
+
+        \subsection{(Backward) Euler's Method}
+        \label{2_backward_euler}
+            This method can be viewed as an \textit{implicit} variant of 
+            \eqref{eq:euler}, and is given by
+            \begin{equation}
+            \label{eq:backward_euler}
+                \mathbf{u}_{i+1} = \mathbf{u}_i + h\mathbf{f}(t_{i+1}, 
+                \mathbf{u}_{i+1}).
+            \end{equation} 
+            Since $\mathbf{u}_{i+1}$ appears on both sides of our expression,
+            we must solve
+            \begin{equation}
+                \mathbf{g}(\mathbf{u}_{i+1}) = \mathbf{u}_{i+1} - 
+                \mathbf{u}_i - h\mathbf{f}(t_{i+1}, \mathbf{u}_{i+1}) 
+                = \mathbf{0}
+            \end{equation}
+            for $\mathbf{u}_{i+1}$ at every iteration.
+
+            Of course, we could solve this symbolically at a cost, but in
+            practice we use any numerical (vector) root finding algorithm 
+            (Secant Method, Newton's Method etc.). 
+
+            Originally in this project Newton's Method was applied using the 
+            \mintinline{python}{scipy.optimize.newton} package in Python where 
+            the Jacobian matrix was approximated via Finite Differences. As is 
+            conventional, the initial `guess' solution was computed via 
+            \eqref{eq:euler}. Unfortunately this method led to some 
+            non-convergent solutions being returned. Eventually the decision 
+            was made to use the \mintinline{python}{scipy.optimize.fsolve} 
+            package which implements a variant of the Powell hybrid method.
+
+
+    \section{Global \& Local Truncation Error}
+    \label{2_error}
+        As with any numerical approximations, our methods will introduce 
+        errors. Here we will include floating point errors in our local truncation error considerations, so floating point errors are not noted directly but are considered in implementation.
+        \begin{definition}
+            The \textbf{Global Truncation Error} (GTE), denoted $e_{i}(t)$,
+            is the total error in our approximation. It is given by 
+            $e_i=u(t_i) - u_i$.
+        \end{definition}
+        \begin{definition}
+            The \textbf{Local Truncation Error} (LTE), denoted $\tau (h)$,
+            for a numerical method is the error introduced in one single 
+            iteration. This is the error introduced in computing 
+            $\mathbf{u}_{i+1}$ when all previously computed values are taken 
+            to be exact.
+        \end{definition}
+        Global truncation error is really just a consequence of local 
+        truncation error (LTE) and due to this it is helpful to address our 
+        full attention to the analysis of LTE.
+        
+        For any method we can derive an expression for the order of LTE by 
+        using a Taylor Series expansion for the exact solution to the ODE and
+        take the difference between that and our iterative scheme (when all 
+        previous values are taken to be exact). Doing this for Euler's method 
+        is shown as follows:
+        
+        Suppose $u_i = u(t_i)$, then Euler's method gives us, 
+        \begin{align}
+            u_{i+1} &= u(t_i) + hf(t_i, u(t_i)) \\
+            &= u(t_i) + hu'(t_i).
+        \end{align}
+        Our taylor expansion for our exact solution is,
+        \begin{equation}
+            u(t_{i+1}) = u(t_i) + hu'(t_i) + \frac{h^2}{2} u''(\xi_i) + O(h^3)
+            , \quad \xi_i \in (t_i, t_{i+1}).
+        \end{equation}
+        Taking the difference of these two expressions leaves us the remainder,
+        \begin{align}
+            \tau(h) = u(t_{i+1}) - u_{i+1} &= \frac{h^2}{2} u''(\xi_i) + 
+            O(h^3)\\&= O(h^2),
+        \end{align}
+        so we know that for Forward Euler we have an LTE $\tau(h)=O(h^2)$.
+        \begin{definition}
+            A method is said to be of \textbf{order} $p$ if its LTE satisfies 
+            $\tau(h)=O(h^{p+1})$. We say that this method is consistent if $p 
+            \ge 1$.
+        \end{definition}
+        With this definition we know that Forward Euler is an order 1 method 
+        -- so too is Backward Euler.
+
+
+    \section{Stability}
+    \label{2_stability}
+
+        \subsection{0-Stability}
+        \label{2_0-stability}
+
+        \subsection{Absolute Stability}
+        \label{2_absolute_stability}
+
+        \subsection{Stiffness}
+        \label{2_stiffness}
+
+
+    \section{Runge-Kutta Methods}
+    \label{2_runge_kutta}
+
+
+    \section{Linear Multistep Methods}
+    \label{2_lmms}
+
+        \subsection{Adams Methods}
+        \label{2_adams}
+
+        \subsection{Nystrom Methods}
+        \label{2_nystrom}
+
+        \subsection{Backwards Differentiation Formulae}
+        \label{2_bdf}
+
+
+    \section{Predictor-Corrector Methods}
+    \label{2_predictor_correctors}
+
+
+    \section{Adaptive Step-Size}
+    \label{2_adaptive}
+
+
+
+
+
+\begin{thebibliography}{50}
+    \bibitem{ascher}
+        U.M.~Ascher, L.R.~Petzold,
+        ``Computer Methods for Ordinary Differential Equations and 
+        Differential-Algebraic Equations'',
+        Philadelphia: SIAM (1935).
+
+    \bibitem{newton}
+        I.~Newton,
+        ``Philosophiae Naturalis Principia Mathematica (“Mathematical
+        Principles of Natural Philosophy”)'' London (1687).
+
+    \bibitem{hairer}
+        E.~Hairer, S.P.~N{\o}rsett, G.~Wanner,
+        ``Solving Ordinary Differential Equations I'',
+        Springer-Verlag Berlin Heidelberg (1993).
+
+    \bibitem{higham}
+        D.F~Griffiths, D.J~Higham,
+        ``Numerical Methods for Ordinary Differential Equations'',
+        Springer-Verlag London Limited (2010).
+
+    \bibitem{powell}
+        https://www.math.utah.edu/software/minpack/minpack/hybrd1.html,
+        ``Documentation for MINPACK subroutine HYBRD1'',
+        April 2019.
+
+    \bibitem{suli}
+        E.~Suli, D.~Mayers,
+        ``An Introduction to Numerical Analysis'',
+        Cambridge University Press (2003).
+
+
+\end{thebibliography}
+
+\end{document}
