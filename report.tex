@@ -25,6 +25,8 @@
 \newtheorem{theorem}{Theorem}[chapter]
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[chapter]
+\theoremstyle{corollary}
+\newtheorem{corollary}{Corollary}[chapter]
 
 \providecommand{\abs}[1]{\lvert#1\rvert}
 \providecommand{\norm}[1]{\lVert#1\rVert}
@@ -90,7 +92,7 @@
 
 
     \section{Initial Value Problems}
-    \label{1_notation}
+    \label{1_ivp}
         An Initial Value Problem (IVP) can generally be written in the form,
         \begin{equation}
         \label{eq:ivp}
@@ -107,7 +109,7 @@
 
 
     \section{Where Do They Come From?}
-    \label{1_notation}
+    \label{1_origins}
         As discussed in the abstract, IVPs often arise from, but are not
         restricted to, the modelling of natural phenomena. 
 
@@ -120,7 +122,7 @@
 
 
     \section{Existence \& Uniqueness of Solutions}
-    \label{1_notation}
+    \label{1_existence}
         Before discussing methods used to approximate solutions to IVPs, it is
         important to ascertain whether solutions do in fact exist and, if so,
         whether or not they are unique. We will use Lipschitz continuity to do
@@ -147,7 +149,7 @@
 
 
     \section{Analytical Methods vs Numerical Methods}
-    \label{l_analytical_numerical}
+    \label{1_analytical_numerical}
         Analytical methods can be used to solve IVPs but only for a very limited
         number of special cases. In terms of computing, there are a number of 
         software packages that are able to solve these differential equations
@@ -179,7 +181,7 @@
     Algorithms which approximate solutions to \eqref{eq:ivp} fall into three
     categories: Taylor Series methods, Linear Multistep Methods (LMMs) and 
     Runge-Kutta methods. It can be viewed that all three of these families are
-    generalisations of Euler's Method \ref{2_forward_euler}. 
+    generalisations of Euler's Method (\ref{2_forward_euler}). 
 
     The focus of this project primarily lies with Linear Multistep Methods and 
     using them in the form of a predictor-corrector pair. Runge-Kutta methods
@@ -190,7 +192,7 @@
     One-Step method, and similarly Runge-Kutta methods are classified as 
     One-Step methods too. Unless explicitly stated, all methods will use a 
     fixed step-size $h=\frac{b-a}{n}$ (where $n$ is the number of time 
-    intervals) producing an equidistant mesh.
+    intervals) producing an equally spaced mesh.
 
     \section{One-Step Methods}
     \label{2_onestep}
@@ -208,10 +210,8 @@
             which are known at the start of this iteration.
 
             \begin{definition}
-                An iterative scheme is \textbf{implicit} if $\mathbf{u}_{i+1}$
-                is expressed in terms of itself and other variables. If a 
-                scheme is expressed only in terms of other variables, then it
-                is \textbf{explicit}. 
+                An iterative scheme is called \textbf{explicit} if at the beginning of an iteration we can express $\mathbf{u}_{i+1}$ in terms of values which have already been computed or can be 
+                computed trivially during the iteration. In contrast, \textbf{implicit} schemes have $\mathbf{u}_{i+1}$ appearing on both `sides' of our scheme, so an algebraic equation must be solved at each iteration to compute $\mathbf{u}_{i+1}$.
             \end{definition}
 
             We will discuss later on how the explicit nature of the method
@@ -256,7 +256,8 @@
         \begin{definition}
             The \textbf{Global Truncation Error} (GTE), denoted $e_{i}(t)$,
             is the total error in our approximation. It is given by 
-            $e_i=u(t_i) - u_i$.
+            $e_i=u(t_i) - u_i$, where $i$ represents the $i$-th iteration
+            in the standard way \ref{1_notation}.
         \end{definition}
         \begin{definition}
             The \textbf{Local Truncation Error} (LTE), denoted $\tau (h)$,
@@ -265,49 +266,126 @@
             $\mathbf{u}_{i+1}$ when all previously computed values are taken 
             to be exact.
         \end{definition}
-        Global truncation error is really just a consequence of local 
-        truncation error (LTE) and due to this it is helpful to address our 
-        full attention to the analysis of LTE.
+        GTE is really just a consequence of LTE and due to this it is helpful
+        to address our full attention to the analysis of LTE.
         
         For any method we can derive an expression for the order of LTE by 
         using a Taylor Series expansion for the exact solution to the ODE and
         take the difference between that and our iterative scheme (when all 
         previous values are taken to be exact). Doing this for Euler's method 
-        is shown as follows:
+        is shown:
         
         Suppose $u_i = u(t_i)$, then Euler's method gives us, 
-        \begin{align}
-            u_{i+1} &= u(t_i) + hf(t_i, u(t_i)) \\
-            &= u(t_i) + hu'(t_i).
-        \end{align}
-        Our taylor expansion for our exact solution is,
         \begin{equation}
-            u(t_{i+1}) = u(t_i) + hu'(t_i) + \frac{h^2}{2} u''(\xi_i) + O(h^3)
-            , \quad \xi_i \in (t_i, t_{i+1}).
+            \begin{split}
+                u_{i+1} &= u(t_i) + hf(t_i, u(t_i)) \\
+                &= u(t_i) + hu'(t_i),\quad
+                \text{since } u'(t_i) = f(t_i, u(t_i)).
+            \end{split}
+        \end{equation}
+        Our Taylor expansion for our exact solution is,
+        \begin{equation}
+            u(t_{i+1}) = u(t_i + h) = u(t_i) + hu'(t_i) + \frac{h^2}{2} 
+            u''(\xi_i) + O(h^3), \quad \xi_i \in (t_i, t_{i+1}).
         \end{equation}
         Taking the difference of these two expressions leaves us the remainder,
-        \begin{align}
-            \tau(h) = u(t_{i+1}) - u_{i+1} &= \frac{h^2}{2} u''(\xi_i) + 
-            O(h^3)\\&= O(h^2),
-        \end{align}
-        so we know that for Forward Euler we have an LTE $\tau(h)=O(h^2)$.
+        \begin{equation}
+            \tau(h) = u(t_{i+1}) - u_{i+1} = \frac{h^2}{2} u''(\xi_i) + 
+            O(h^3) = O(h^2),
+        \end{equation}
+        so we know that for Forward Euler we have $\tau(h)=O(h^2)$.
+
+        It's worth noting that a similar process can be carried out to find an expression for GTE but without the assumption that 
+        $u_i=u(t_i)$. 
         \begin{definition}
             A method is said to be of \textbf{order} $p$ if its LTE satisfies 
-            $\tau(h)=O(h^{p+1})$. We say that this method is consistent if $p 
-            \ge 1$.
+            $\tau(h)=O(h^{p+1})$. If $p \ge 1$ then we say that the method is
+            consistent of order $p$.
         \end{definition}
         With this definition we know that Forward Euler is an order 1 method 
-        -- so too is Backward Euler.
+        -- so too is Backward Euler. In addition, when our method is order $p$,
+        we know that the GTE, $e_i(t)=O(h^p)$ too.
 
 
-    \section{Stability}
+    \section{Convergence \& Stability}
     \label{2_stability}
+        Efforts in using these numerical algorithms would be fruitless if the 
+        results obtained were not representative of the \textit{true} solution.
+        So it is important that we know a method is \textit{convergent} before 
+        using it.
 
-        \subsection{0-Stability}
-        \label{2_0-stability}
+        \begin{definition}
+            A method is said to be \textbf{0-stable} if a small perturbation 
+            $\boldsymbol{\varepsilon}$ ($\norm{\boldsymbol{\varepsilon}} 
+            << 1$) to $\mathbf{u}_0$ causes the numerical solution to change 
+            at most by $K\boldsymbol{\varepsilon}$, where $K$ is independent 
+            of $h$.
+        \end{definition}
+
+        We will later discuss the \textit{root condition} which can be used as
+        a quantitative method to establish 0-stability, but for the moment this
+        qualitative definition is all we need.
+
+        \begin{theorem}[Dahlquist's Equivalence Theorem]
+        \label{2_dahlquist}
+            A numerical method is said to be convergent of order $p$ if and 
+            only if it is 0-stable and consistent of order $p$.
+        \end{theorem}
+
+        \begin{corollary}
+        \label{2_dahlquist_corollary}
+            A convergent numerical method has the property that,
+            \begin{equation}
+                \lim_{h \to 0} \norm{\mathbf{u}(t_i) - \mathbf{u}_i} = 0.
+            \end{equation}
+        \end{corollary}
+
+        In practice, we are computing with floating point numbers so, in an 
+        arbitrary precision, by taking $h$ to be excessively small then the 
+        accuracy that we might theoretically gain will be counteracted by round-off errors.
+        
 
         \subsection{Absolute Stability}
         \label{2_absolute_stability}
+            Given that a method is \textit{0-stable} we know that if we take 
+            $h$ to be very small we acheive a very good representation of the
+            true solution. But how small does $h$ have to be? Are there any 
+            limitations on how \textit{large} $h$ is?
+
+            Consider the scalar \textit{test equation},
+            \begin{equation}
+            \label{2_test_equation}
+                u' = \lambda u, \quad \lambda \in \mathbb{C},
+            \end{equation}
+            whose solution is known, $u(t)=c e^{\lambda t}$ for some constant 
+            $c$. When $\mathbb{R}\text{e}\{\lambda\} < 0$, our solution 
+            converges to 0 as $t\to\infty$. This results in the absolutely 
+            decreasing sequence of approximations 
+            ${\lbrace u_i \rbrace}_{i=0}^{\infty}$.
+
+            We want our numerical methods to share this property when acting 
+            on the test equation.
+
+            \begin{definition}
+                The \textbf{region of absolute stability} is the set of 
+                $h\lambda\in\mathbb{C}$ where 
+                ${\lbrace u_i \rbrace}_{i=0}^{\infty}$ is an absolutely
+                decreasing sequence.
+            \end{definition}
+
+            We can find the region of absolute stability by applying our 
+            numerical method to the test equation. For forward Euler we attain 
+            the region $\abs{1+h\lambda} \le 1$ which provides us a very 
+            restrictive upper bound on the value of $h$ we can choose. 
+            Applying backward Euler gives the region 
+            $\abs{1-h\lambda}^{-1} \le 1$, which is satisfied for all values 
+            of $h, \lambda$ where $\mathbb{R}\text{e}\{\lambda\} \le 0$.
+            Hence the entire left half-plane is in the region of stability and there is no restriction on the value of $h$.
+
+            \begin{definition}
+                A numerical method having the full left-half plane in its region of absolute stability is said to be \textbf{A-stable}.
+            \end{definition} 
+
 
         \subsection{Stiffness}
         \label{2_stiffness}
@@ -364,7 +442,7 @@
         Springer-Verlag London Limited (2010).
 
     \bibitem{powell}
-        https://www.math.utah.edu/software/minpack/minpack/hybrd1.html,
+        https://www.math.utah.edu/software/minpack/minpack/hybrd1.html, 
         ``Documentation for MINPACK subroutine HYBRD1'',
         April 2019.
 
