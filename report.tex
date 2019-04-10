@@ -11,27 +11,26 @@
 \titleformat{\chapter }[display]{\normalfont\huge\bfseries}{\chaptertitlename\
 \thechapter}{20pt}{\Huge}
 
-
 \usepackage{graphicx}
-
 \usepackage{hyperref}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
 
-
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[chapter]
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[chapter]
-\theoremstyle{corollary}
-\newtheorem{corollary}{Corollary}[chapter]
+\newtheorem{corollary}{Corollary}[theorem]
+\theoremstyle{definition}
+\newtheorem{example}{Example}[chapter]
 
 \providecommand{\abs}[1]{\lvert#1\rvert}
 \providecommand{\norm}[1]{\lVert#1\rVert}
 
 \begin{document}
+
 
 % The 'article' document class provides a simple way to make a title
 % page: 
@@ -207,15 +206,21 @@
             \end{equation}
             This scheme is \textit{explicit} since we can calculate 
             $\mathbf{u}_{i+1}$ using a combination of $\mathbf{u}_i$ and $t_i$
-            which are known at the start of this iteration.
+            which are known at the start of an iteration.
 
             \begin{definition}
-                An iterative scheme is called \textbf{explicit} if at the beginning of an iteration we can express $\mathbf{u}_{i+1}$ in terms of values which have already been computed or can be 
-                computed trivially during the iteration. In contrast, \textbf{implicit} schemes have $\mathbf{u}_{i+1}$ appearing on both `sides' of our scheme, so an algebraic equation must be solved at each iteration to compute $\mathbf{u}_{i+1}$.
+                An iterative scheme is called \textbf{explicit} if at the 
+                beginning of an iteration we can express $\mathbf{u}_{i+1}$ in 
+                terms of values which have already been computed or can be 
+                computed by simple substitution during the iteration. In 
+                contrast, \textbf{implicit} schemes have $\mathbf{u}_{i+1}$ 
+                appearing on both `sides' of our scheme, so an algebraic 
+                equation must be solved at each iteration to compute 
+                $\mathbf{u}_{i+1}$.
             \end{definition}
 
-            We will discuss later on how the explicit nature of the method
-            impacts the stability of a numerical algorithm.
+            We will discuss later on how the explicit nature of a method 
+            impacts its stability.
 
         \subsection{(Backward) Euler's Method}
         \label{2_backward_euler}
@@ -229,6 +234,7 @@
             Since $\mathbf{u}_{i+1}$ appears on both sides of our expression,
             we must solve
             \begin{equation}
+            \label{eq:nonlinear_equation}
                 \mathbf{g}(\mathbf{u}_{i+1}) = \mathbf{u}_{i+1} - 
                 \mathbf{u}_i - h\mathbf{f}(t_{i+1}, \mathbf{u}_{i+1}) 
                 = \mathbf{0}
@@ -252,13 +258,17 @@
     \section{Global \& Local Truncation Error}
     \label{2_error}
         As with any numerical approximations, our methods will introduce 
-        errors. Here we will include floating point errors in our local truncation error considerations, so floating point errors are not noted directly but are considered in implementation.
+        errors. Here we will include floating point errors in our
+        truncation error considerations, so floating point errors are not
+        noted directly but are considered in implementation.
+
         \begin{definition}
             The \textbf{Global Truncation Error} (GTE), denoted $e_{i}(t)$,
             is the total error in our approximation. It is given by 
             $e_i=u(t_i) - u_i$, where $i$ represents the $i$-th iteration
-            in the standard way \ref{1_notation}.
+            in the standard way (see Subsection \ref{1_notation}).
         \end{definition}
+
         \begin{definition}
             The \textbf{Local Truncation Error} (LTE), denoted $\tau (h)$,
             for a numerical method is the error introduced in one single 
@@ -266,6 +276,7 @@
             $\mathbf{u}_{i+1}$ when all previously computed values are taken 
             to be exact.
         \end{definition}
+
         GTE is really just a consequence of LTE and due to this it is helpful
         to address our full attention to the analysis of LTE.
         
@@ -304,7 +315,7 @@
         \end{definition}
         With this definition we know that Forward Euler is an order 1 method 
         -- so too is Backward Euler. In addition, when our method is order $p$,
-        we know that the GTE, $e_i(t)=O(h^p)$ too.
+        we know that the GTE, $e_i=O(h^p)$ too.
 
 
     \section{Convergence \& Stability}
@@ -348,9 +359,8 @@
         \subsection{Absolute Stability}
         \label{2_absolute_stability}
             Given that a method is \textit{0-stable} we know that if we take 
-            $h$ to be very small we acheive a very good representation of the
-            true solution. But how small does $h$ have to be? Are there any 
-            limitations on how \textit{large} $h$ is?
+            $h$ to be sufficiently small we acheive a very good representation
+            of the true solution. But how small does $h$ have to be? Are there any limitations on how \textit{large} $h$ is?
 
             Consider the scalar \textit{test equation},
             \begin{equation}
@@ -380,7 +390,7 @@
             Applying backward Euler gives the region 
             $\abs{1-h\lambda}^{-1} \le 1$, which is satisfied for all values 
             of $h, \lambda$ where $\mathbb{R}\text{e}\{\lambda\} \le 0$.
-            Hence the entire left half-plane is in the region of stability and there is no restriction on the value of $h$.
+            Hence the entire left half-plane is in the region of stability and there is no restriction on the value of $h$ we can choose.
 
             \begin{definition}
                 A numerical method having the full left-half plane in its region of absolute stability is said to be \textbf{A-stable}.
@@ -389,17 +399,153 @@
 
         \subsection{Stiffness}
         \label{2_stiffness}
+            Ideally we would be able to choose our step size $h$ based solely
+            on the accuracy we want from our computation. Unfortunately this is
+            not always the case -- as highlighted by our region of absolute
+            stability for forward Euler. The \textit{stiffness} of a system helps characterise this problem.
 
+            \begin{definition}
+                An IVP is said to be \textbf{stiff} if the step size required 
+                to satisfy our absolute stability requirement is significantly smaller than the step size required to approximate at some desired accuracy.
+            \end{definition}
+
+            \begin{example}
+                Consider the IVP,
+                \begin{equation}
+                \label{eq:2_stiff_ex}
+                    \begin{cases}
+                        u'(t) = 100u(t), \quad \text{on } t \in [0,0.2],\\
+                        u(0) = 10.
+                    \end{cases}
+                \end{equation}
+                Figure \ref{2_stiff_graphs} demonstrates the impact of our 
+                equation's stiffness on our results using forward Euler. By 
+                method of substitution, our absolute stability expression 
+                tells us that in order to compute stable approximations using 
+                \eqref{eq:euler} we must use $h \le 0.02$. In contrast, we 
+                have no bound on our choice of $h$ in terms of stability for 
+                backward Euler. This is highlighted by the general shape of 
+                our graphs in comparison to results from forward Euler.
+
+                \begin{figure}
+                    \centering
+                        \includegraphics[width=\columnwidth]{stiff_graphs}
+                        \caption{Demonstration of stiffness using 
+                        \eqref{eq:euler} \& \eqref{eq:backward_euler}
+                        with $h=0.05, 0.02, 0.005$ on \eqref{eq:2_stiff_ex}}
+                        \label{2_stiff_graphs}
+                \end{figure}
+            \end{example}
+
+            In summary, we must be careful when choosing numerical methods to 
+            solve stiff equations. Depending on the stiffness, we must decide 
+            between the performance of choosing an explicit method with 
+            smaller steps or using an implicit method with larger steps, but 
+            needing to numerically solve an equation such as 
+            \eqref{eq:nonlinear_equation} at each iteration.
 
     \section{Runge-Kutta Methods}
     \label{2_runge_kutta}
+        Runge-Kutta methods (first discussed by Runge 1895) look to solve the 
+        problem of \textit{how can we improve the accuracy of our 
+        approximations without the need to take significantly smaller time 
+        intervals?}. Here we won't discuss Runge-Kutta methods in much depth 
+        as it is outside of the scope of this project, but will mention 
+        asymptotic complexity and derivations.
 
+        From attempting to integrate \eqref{eq:ivp}, we can apply a Gauss quadrature rule,
+        \begin{equation}
+        \label{eq:fundamental_theorem_calculus}
+            \mathbf{u}_{i+1} = \mathbf{u}_i + \int_{t_i}^{t_{i+1}} 
+            \mathbf{u}'(t) dt,
+        \end{equation}
+        to solve our differential equation. It is with this idea that Runge-Kutta methods were established.
+
+        The general notion is that if we can evaluate intermediate values 
+        (or \textit{stages}) between $\mathbf{u}_i$ and $\mathbf{u}_{i+1}$, we can better approximate $\mathbf{u}_{i+1}$. 
+
+        \subsection{4-Stage Runge-Kutta}
+        \label{2_rk4}
+            Generally the most popular Runge-Kutta method is known as the 
+            \textit{Classical Runge-Kutta} which is in fact a special case of 
+            the generalised 4-stage Runge-Kutta. The generalised form has $10$
+            free parameters, optimising these parameters to yield the highest 
+            possible \textit{order} gives us our `Classical' method. This 
+            method is given by the iterative scheme,
+            \begin{equation}
+            \label{eq:rk4}
+                \begin{split}
+                    \mathbf{u}_{i+1} &= \mathbf{u}_i + 
+                    \frac{h}{6} (\mathbf{k}_1 + 2\mathbf{k}_2 + 2\mathbf{k}_3 
+                    + \mathbf{k}_4), \quad 
+                    \text{where }\\
+                    \mathbf{k}_1 &= \mathbf{f}(t_i, \mathbf{u}_i),\\
+                    \mathbf{k}_2 &= \mathbf{f}(t_i+\frac{h}{2}, 
+                    u_i+\frac{1}{2}\mathbf{k}_1),\\
+                    \mathbf{k}_3 &= \mathbf{f}(t_i+\frac{h}{2}, 
+                    \mathbf{u}_i+\frac{1}{2}\mathbf{k}_2),\\
+                    \mathbf{k}_4 &= \mathbf{f}(t_i+h, 
+                    \mathbf{u}_i+\mathbf{k}_3).
+                \end{split}
+            \end{equation}
+            This method is fourth order as $\tau(h)=O(h^5)$. 
+
+            In practice, Runge-Kutta methods have great accuracy properties
+            and for small examples often yield sufficient results at a 
+            reasonable time cost. Their downsides however, are in the fact
+            that every iteration we are computing a number of intermediate
+            values and then discarding them after each iteration. These 
+            intermediate function evaluations actually dominate our 
+            algorithm's running time. Consequently, when working on large 
+            systems of complicated ODEs our computations become very 
+            inefficient. 
 
     \section{Linear Multistep Methods}
     \label{2_lmms}
+        In a similar vein to Runge-Kutta methods, Linear Multistep Methods 
+        look to use more information from $t<t_{i+1}$ to improve our 
+        approximations. In contrast to Runge-Kutta methods, LMMs use 
+        previously computed values in their schemes which helps to avoid the problem highlighted at the end of Section \ref{2_runge_kutta}.
+
+        Unlike aforementioned one-step methods, LMMs are not 
+        \textit{self-starting} and in order to carry out the first steps, a 
+        starting scheme must be decided on. Often a Runge-Kutta method of
+        appropriate order is used as a starting routine. This method is chosen
+        to have an order equal to or higher than the coupled LMM, to preserve
+        asymptotic accuracy.
 
         \subsection{Adams Methods}
         \label{2_adams}
+            Adams methods were devised in the late 19th century (prior to 
+            Runge). They are derived from trying to solve the integral 
+            equation,
+            \begin{equation}
+            \label{2_int_equation}
+                \mathbf{u}(t_{i+1}) = \mathbf{u}(t_i) + \int_{t_i}^{t_{i+1}}
+                \mathbf{f}(t, \mathbf{u}(t)) dt,
+            \end{equation}
+            by approximating our integrand by a polynomial which interpolates
+            our previously computed $\mathbf{u}_j$ values.
+
+            A $k$-step \textit{Adams-Bashforth} method is an \textit{explicit}
+            Adams scheme which interpolates to the $k$ values to approximate 
+            our integrand, $\mathbf{f}(t, \mathbf{u}(t))$. A $k$-step method has LTE of $\tau(h)=O(h^{k+1})$, so is order $k$. It's worth noting that over the bounds of our integral, $(t_i, t_{i+1}$, we are \textit{extrapolating} which is often unreliable.
+
+            The $2$ and $3$-step Adams-Bashforth methods are given by their 
+            iterative schemes,
+            \begin{align}
+                \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{2} 
+                (3\mathbf{f}(t_i, \mathbf{u}_i) - 
+                \mathbf{f}(t_{i-1},\mathbf{u}_{i-1})),\\
+                \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{12} 
+                (23\mathbf{f}(t_i, \mathbf{u}_i) - 
+                16\mathbf{f}(t_{i-1},\mathbf{u}_{i-1}) + 
+                5\mathbf{f}(t_{i-2}, \mathbf{u}_{i-2})).
+            \end{align}
+
+            Implicit Adams methods are known as \textit{Adams-Moulton} 
+            methods. 
+
 
         \subsection{Nystrom Methods}
         \label{2_nystrom}
@@ -414,10 +560,6 @@
 
     \section{Adaptive Step-Size}
     \label{2_adaptive}
-
-
-
-
 
 \begin{thebibliography}{50}
     \bibitem{ascher}
@@ -442,7 +584,7 @@
         Springer-Verlag London Limited (2010).
 
     \bibitem{powell}
-        https://www.math.utah.edu/software/minpack/minpack/hybrd1.html, 
+        ``https://www.math.utah.edu/software/minpack/minpack/hybrd1.html'', 
         ``Documentation for MINPACK subroutine HYBRD1'',
         April 2019.
 
@@ -450,6 +592,11 @@
         E.~Suli, D.~Mayers,
         ``An Introduction to Numerical Analysis'',
         Cambridge University Press (2003).
+
+    \bibitem{gregory}
+        R.D.~Gregory,
+        ``Classical Mechanics'',
+        Cambridge University Press (2006).
 
 
 \end{thebibliography}
