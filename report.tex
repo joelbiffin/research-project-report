@@ -450,7 +450,7 @@
         problem of \textit{how can we improve the accuracy of our 
         approximations without the need to take significantly smaller time 
         intervals?}. Here we won't discuss Runge-Kutta methods in much depth 
-        as it is outside of the scope of this project, but will mention 
+        as it is outside of the scope of this project, but we will mention 
         asymptotic complexity and derivations.
 
         From attempting to integrate \eqref{eq:ivp}, we can apply a Gauss quadrature rule,
@@ -528,8 +528,11 @@
             our previously computed $\mathbf{u}_j$ values.
 
             A $k$-step \textit{Adams-Bashforth} method is an \textit{explicit}
-            Adams scheme which interpolates to the $k$ values to approximate 
-            our integrand, $\mathbf{f}(t, \mathbf{u}(t))$. A $k$-step method has LTE of $\tau(h)=O(h^{k+1})$, so is order $k$. It's worth noting that over the bounds of our integral, $(t_i, t_{i+1}$, we are \textit{extrapolating} which is often unreliable.
+            Adams scheme which interpolates to $k$ values to approximate 
+            our integrand, $\mathbf{f}(t, \mathbf{u}(t))$. A $k$-step method 
+            has LTE of $\tau(h)=O(h^{k+1})$, so is order $k$. It's worth 
+            noting that over the bounds of our integral, $(t_i, t_{i+1})$, we 
+            are \textit{extrapolating} which is often unreliable.
 
             The $2$ and $3$-step Adams-Bashforth methods are given by their 
             iterative schemes,
@@ -543,8 +546,28 @@
                 5\mathbf{f}(t_{i-2}, \mathbf{u}_{i-2})).
             \end{align}
 
-            Implicit Adams methods are known as \textit{Adams-Moulton} 
-            methods. 
+            Implicit Adams schemes are known as \textit{Adams-Moulton} 
+            methods. They are derived in a similar way to Adams-Bashforth 
+            methods except a $k$-step \textit{Adams-Moulton} method looks to 
+            approximate the integrand with a polynomial which interpolates to 
+            $k+1$ points. This results in integrating over an interpolated 
+            region which is much more reliable than the explicit schemes. 
+
+            The trade-off for this increase stability is that we must solve
+            a non-linear equation (similar to \eqref{eq:nonlinear_equation}) at
+            every iteration -- which we know is costly.
+
+            The $1$ and $2$-step Adams-Moulton methods are given by their iterative schemes,
+            \begin{align}
+                \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{2} 
+                (\mathbf{f}(t_i, \mathbf{u}_i) + 
+                \mathbf{f}(t_{i+1},\mathbf{u}_{i+1})),\\
+
+                \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{12} 
+                (5\mathbf{f}(t_{i+1}, \mathbf{u}_{i+1}) +
+                8\mathbf{f}(t_{i},\mathbf{u}_{i}) -
+                \mathbf{f}(t_{i-1}, \mathbf{u}_{i-1})).
+            \end{align}
 
 
         \subsection{Nystrom Methods}
