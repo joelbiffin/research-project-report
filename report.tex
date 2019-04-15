@@ -18,6 +18,8 @@
 \usepackage{amssymb}
 \usepackage{amsthm}
 
+\usepackage{enumitem}
+
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[chapter]
 \theoremstyle{definition}
@@ -390,10 +392,12 @@
             Applying backward Euler gives the region 
             $\abs{1-h\lambda}^{-1} \le 1$, which is satisfied for all values 
             of $h, \lambda$ where $\mathbb{R}\text{e}\{\lambda\} \le 0$.
-            Hence the entire left half-plane is in the region of stability and there is no restriction on the value of $h$ we can choose.
+            Hence the entire left half-plane is in the region of stability and 
+            there is no restriction on the value of $h$ we can choose.
 
             \begin{definition}
-                A numerical method having the full left-half plane in its region of absolute stability is said to be \textbf{A-stable}.
+                A numerical method having the full left-half plane in its 
+                region of absolute stability is said to be \textbf{A-stable}.
             \end{definition} 
 
 
@@ -402,11 +406,14 @@
             Ideally we would be able to choose our step size $h$ based solely
             on the accuracy we want from our computation. Unfortunately this is
             not always the case -- as highlighted by our region of absolute
-            stability for forward Euler. The \textit{stiffness} of a system helps characterise this problem.
+            stability for forward Euler. The \textit{stiffness} of a system
+            helps to characterise this problem.
 
             \begin{definition}
                 An IVP is said to be \textbf{stiff} if the step size required 
-                to satisfy our absolute stability requirement is significantly smaller than the step size required to approximate at some desired accuracy.
+                to satisfy our absolute stability requirement is significantly
+                smaller than the step size required to approximate at some 
+                desired accuracy.
             \end{definition}
 
             \begin{example}
@@ -447,11 +454,11 @@
     \section{Runge-Kutta Methods}
     \label{2_runge_kutta}
         Runge-Kutta methods (first discussed by Runge 1895) look to solve the 
-        problem of \textit{how can we improve the accuracy of our 
-        approximations without the need to take significantly smaller time 
-        intervals?}. Here we won't discuss Runge-Kutta methods in much depth 
-        as it is outside of the scope of this project, but we will mention 
-        asymptotic complexity and derivations.
+        problem of \textit{improving the accuracy of our approximations 
+        without the need to take significantly smaller time intervals?}. Here 
+        we won't discuss Runge-Kutta methods in much depth as it is outside of 
+        the scope of this project, but we will mention asymptotic complexity 
+        and derivations.
 
         From attempting to integrate \eqref{eq:ivp}, we can apply a Gauss quadrature rule,
         \begin{equation}
@@ -494,7 +501,7 @@
             and for small examples often yield sufficient results at a 
             reasonable time cost. Their downsides however, are in the fact
             that every iteration we are computing a number of intermediate
-            values and then discarding them after each iteration. These 
+            values and then discarding them at each step. These 
             intermediate function evaluations actually dominate our 
             algorithm's running time. Consequently, when working on large 
             systems of complicated ODEs our computations become very 
@@ -520,7 +527,7 @@
             Runge). They are derived from trying to solve the integral 
             equation,
             \begin{equation}
-            \label{2_int_equation}
+            \label{eq:2_int_equation}
                 \mathbf{u}(t_{i+1}) = \mathbf{u}(t_i) + \int_{t_i}^{t_{i+1}}
                 \mathbf{f}(t, \mathbf{u}(t)) dt,
             \end{equation}
@@ -553,36 +560,158 @@
             $k+1$ points. This results in integrating over an interpolated 
             region which is much more reliable than the explicit schemes. 
 
-            The trade-off for this increase stability is that we must solve
+            The trade-off for this increase in stability is that we must solve
             a non-linear equation (similar to \eqref{eq:nonlinear_equation}) at
             every iteration -- which we know is costly.
 
-            The $1$ and $2$-step Adams-Moulton methods are given by their iterative schemes,
+            The $1$ and $2$-step Adams-Moulton methods are given by their 
+            iterative schemes,
             \begin{align}
                 \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{2} 
                 (\mathbf{f}(t_i, \mathbf{u}_i) + 
                 \mathbf{f}(t_{i+1},\mathbf{u}_{i+1})),\\
-
                 \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{12} 
                 (5\mathbf{f}(t_{i+1}, \mathbf{u}_{i+1}) +
                 8\mathbf{f}(t_{i},\mathbf{u}_{i}) -
                 \mathbf{f}(t_{i-1}, \mathbf{u}_{i-1})).
             \end{align}
 
+            A $k$-step Adams-Moulton method is order $k+1$.
 
-        \subsection{Nystrom Methods}
+
+        \subsection{Nystr\"om Methods}
         \label{2_nystrom}
+            Similar to Adams, Nystr\"om used the fundamental theorem of 
+            calculus to derive an integral equation which could be solved by
+            approximating the intergrand. Unlike in \eqref{eq:2_int_equation}, 
+            Nystr\"om's integral equation acts over the larger time interval
+            $(t_{i-1}, t_{i+1})$. The integral equation is,
+            \begin{equation}
+            \label{eq:nystrom_int_equation}
+                \mathbf{u}(t_{i+1}) = \mathbf{u}(t_{i-1}) 
+                + \int_{t_{i-1}}^{t_{i+1}} \mathbf{f}(t, \mathbf{u}(t)) dt.
+            \end{equation}
+
+            Nystr\"om methods are \textit{explicit}. In this report we will 
+            apply the 2-step \textit{Leapfrog method}, which is defined by the 
+            iterative scheme,
+            \begin{equation}
+            \label{eq:leapfrog}
+                \mathbf{u}_{i+1} = \mathbf{u}_{i-1} + 2h\mathbf{f}(t_i, 
+                \mathbf{u}_i),
+            \end{equation}
+            and has order 2.
 
         \subsection{Backwards Differentiation Formulae}
         \label{2_bdf}
+            Unlike Nystr\"om and Adams methods, \textit{Backwards 
+            Differentiation Forumlae} (BDF) methods do not look to numerical
+            integration for their derivations. Instead, the idea is to 
+            start with an interpolating polynomial to directly approximate 
+            our solution function. Then, by numerically differentiating our
+            interpolant, we substitute this approximation into our IVP and 
+            derive our iterative scheme. 
+
+            BDF methods are \textit{implicit} methods, so they come with the 
+            same caveats as the Adams-Moulton methods -- that is, the trade off
+            between stability and computational cost. BDF methods are 
+            \textit{A-stable}, so are appropriate to solve \textit{stiff} 
+            equations (popularised by Gear, 1971). 
+
+            The 2-step BDF method (or \textit{BDF-2}) is given by the 
+            iterative scheme,
+            \begin{equation}
+            \label{eq:2_bdf2}
+                \mathbf{u}_{i+1} = \frac{4}{3}\mathbf{u}_i - 
+                \frac{1}{3}\mathbf{u}_{i-1} + 
+                \frac{2h}{3}\mathbf{f}(t_{i+1}, \mathbf{u}_{i+1}),
+            \end{equation}
+            and is second order.
 
 
     \section{Predictor-Corrector Methods}
     \label{2_predictor_correctors}
+        Ignoring their computational cost, \textit{implicit} methods are more
+        favourable when wanting a one-size-fits-all family of algorithms due 
+        to their excellent stability properties. But how do we reduce their
+        cost?
+
+        Functional iteration is the natural way that one might attempt to 
+        evaluate $\mathbf{u}_{i+1}$ at each step. But this actually creates
+        more problems than it solves (especially in stiff equations) and only 
+        converges to our solution \textit{linearly}. We have already mentioned
+        the use of numerical root finders. Newton's method is a popular choice 
+        as on paper it converge quadratically -- yielding a faster convergence 
+        for a similar cost. In fact this is not the case. As discussed in 
+        \cite{press}, when the Jacobian matrix is approximated via finite 
+        differences (as it is in most ODE solvers), Newton's method converges 
+        \textit{superlinearly} with an order of convergence $\sqrt{2}$. 
+        Predictor-corrector methods avoid these problems and attempt to make 
+        good use of the desirable properties of both \textit{explicit} and 
+        \textit{implicit} methods.
+
+        \begin{definition}
+        \label{2_pc_method}
+            A \textbf{predictor-corrector} method is a method pairing with 
+            an \textit{explicit} predictor to produce a value 
+            $\mathbf{u}_{i+1}^*$ which is substituted into an 
+            \textit{implicit} corrector to produce our desired value, 
+            $\mathbf{u}_{i+1}$. Predictor-correctors have the form,
+            \begin{align}
+                \mathbf{u}_{i+1}^* &= \boldsymbol\Phi^* (\text{
+                previously computed values of }\mathbf{u}),\\
+                \mathbf{u}_{i+1} &= \boldsymbol\Phi(\mathbf u_{i+1}^*, 
+                \text{previously computed values of }\mathbf u),
+            \end{align}
+            where $\boldsymbol\Phi^*, \boldsymbol\Phi $ are chosen explicit 
+            and implicit schemes respectively.
+        \end{definition}
+
+        There are different variants of predictor-correctors, PEC, PECE and 
+        P(EC)\textsuperscript{k}E. These letters refer to the steps carried out in implementation -- \textit{Predict, Evaluate (derivative), Correct, Evaluate (derivative)}. For the purposes of this project, all 
+        predictor-correctors followed the PECE structure to simplify 
+        implementation.
+
+        It is common for Adams-Bashforth and Adams-Moulton methods to be used
+        as a predictor corrector pair. In this project, we also consider the 
+        Forward-Backward Euler, Heun and Leapfrog-BDF2 pairings.
 
 
     \section{Adaptive Step-Size}
     \label{2_adaptive}
+        Due to Milne, predictor-corrector methods give us an inexpensive way to
+        approximate our LTE at each iteration. This error estimate is known as 
+        \textit{Milne's device} and is given by,
+        \begin{equation}
+        \label{eq:2_milnes_device}
+            \text{LTE} \approx \frac{C_{p+1}}{C_{p+1} - C_{p+1}^*} 
+            \abs{\mathbf{u_{i+1} - u_{i+1}^*}},
+        \end{equation}
+        where $p$ is the order of our scheme, $C_{p+1}, C_{p+1}^*$s are the 
+        error constants for the predictor and corrector respectively and the 
+        absolute value is element-wise (not the euclidean length). 
+
+        This error estimate allows us to optimise our computations so that when
+        our LTE is high we can \textit{decrease} our step-size to reduce our 
+        error and \textit{increase} our step size when our LTE is low. We will be adapting our step-size using the formula,
+        \begin{equation}
+        \label{eq:adapt}
+            h_{i+1} = h_i \left(\frac{\text{tol}} 
+            {\norm{\text{LTE}}_2}\right)^{\frac{1}{p+1}},
+        \end{equation}
+        where $\text{tol}$ is some user defined tolerance. 
+
+        When using one-step predictor-corrector pairs, we can go right ahead 
+        and apply \eqref{eq:adapt}. Unfortunately, the same cannot be said for 
+        LMMs, since in deriving their iterative schemes we have assumed a fixed
+        $h$. This leaves two options,
+        \begin{enumerate}[label=(\roman*)]
+            \item{derive new schemes which account for adaptive $h$, or}
+            \item{interpolate backwards to evaluate values of $\mathbf{u}$
+            using this step's fixed $h$.}
+        \end{enumerate}
+
+
 
 \begin{thebibliography}{50}
     \bibitem{ascher}
@@ -594,7 +723,8 @@
     \bibitem{newton}
         I.~Newton,
         ``Philosophiae Naturalis Principia Mathematica (“Mathematical
-        Principles of Natural Philosophy”)'' London (1687).
+        Principles of Natural Philosophy”)'',
+        London (1687).
 
     \bibitem{hairer}
         E.~Hairer, S.P.~N{\o}rsett, G.~Wanner,
@@ -602,7 +732,7 @@
         Springer-Verlag Berlin Heidelberg (1993).
 
     \bibitem{higham}
-        D.F~Griffiths, D.J~Higham,
+        D.F.~Griffiths, D.J.~Higham,
         ``Numerical Methods for Ordinary Differential Equations'',
         Springer-Verlag London Limited (2010).
 
@@ -621,7 +751,22 @@
         ``Classical Mechanics'',
         Cambridge University Press (2006).
 
+    \bibitem{press}
+        W.T.~Vetterling, W.H.~Press,
+        ``Numerical Recipes in C: the art of scientific computing (2nd 
+        Edition)'',
+        Cambridge University Press (1992).
+
+    \bibitem{pras}
+        ``http://www.cs.ox.ac.uk/people/pras.pathmanathan/nmood\_printable.pdf'',
+        ``Numerical methods and object-oriented design'',
+        January 2019.
+
+    \bibitem{iserles}
+        A.~Iserles,
+        ``A First Course in the Numerical Analysis of Differential Equations'',
+        Cambridge University Press (1996).
 
 \end{thebibliography}
-
 \end{document}
+
