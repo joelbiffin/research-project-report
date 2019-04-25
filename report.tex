@@ -1,15 +1,39 @@
 \documentclass[12pt, twoside]{report}
 
 \usepackage[a4paper, margin=1.5cm]{geometry}
+\usepackage{xcolor}
 
 \usepackage{minted}
-\setminted[python]{autogobble=true}
-\usemintedstyle{xcode}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\setminted[python]{
+    autogobble=true,
+    linenos=true,
+    numbers=left,
+    python3=true,
+    xleftmargin=0.75cm,
+    xrightmargin=0.75cm,
+    bgcolor=bg,
+    fontsize=\small
+}
+\setmintedinline[python]{
+    bgcolor={}
+}
+\usepackage{etoolbox}
+%\BeforeBeginEnvironment{minted}{\vspace{0cm}}
+%\AfterEndEnvironment{minted}{\vspace{-2cm}}
+
+\BeforeBeginEnvironment{minted}{\vspace{0cm}}
+\AfterEndEnvironment{minted}{\vspace{-0.75cm}}
+
+%\BeforeBeginEnvironment{listing}{\vspace{0cm}}
+%\AfterEndEnvironment{listing}{\vspace{0cm}}
+
+\usemintedstyle{xcode} 
 
 \usepackage{titlesec}
-\titlespacing*{\chapter}{0pt}{20pt}{20pt}
-\titleformat{\chapter }[display]{\normalfont\huge\bfseries}{\chaptertitlename\
-\thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{16pt}
+\titleformat{\chapter }[display]{\normalfont\Large\bfseries}{\chaptertitlename\
+\thechapter}{10pt}{\Huge}
 
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -90,6 +114,8 @@
         schemes will use subscripting to represent the $i$-th iteration 
         ($u_{i}, \mathbf{u}_i$) of a method. Generally, vector quantities will
         be expressed as such rather than element-wise, unless otherwise stated.
+
+        Chapter 3 gives reference to \textit{solvers}--this italicised  
 
 
     \section{Initial Value Problems}
@@ -178,7 +204,7 @@
 
 
 \chapter{Numerical Methods}
-
+\label{2_methods}
     Algorithms which approximate solutions to \eqref{eq:ivp} fall into three
     categories: Taylor Series methods, Linear Multistep Methods (LMMs) and 
     Runge-Kutta methods. It can be viewed that all three of these families are
@@ -641,7 +667,7 @@
         more problems than it solves (especially in stiff equations) and only 
         converges to our solution \textit{linearly}. We have already mentioned
         the use of numerical root finders. Newton's method is a popular choice 
-        as on paper it converge quadratically -- yielding a faster convergence 
+        as on paper it converges quadratically -- yielding a faster convergence 
         for a similar cost. In fact this is not the case. As discussed in 
         \cite{press}, when the Jacobian matrix is approximated via finite 
         differences (as it is in most ODE solvers), Newton's method converges 
@@ -668,12 +694,14 @@
         \end{definition}
 
         There are different variants of predictor-correctors, PEC, PECE and 
-        P(EC)\textsuperscript{k}E. These letters refer to the steps carried out in implementation -- \textit{Predict, Evaluate (derivative), Correct, Evaluate (derivative)}. For the purposes of this project, all 
+        P(EC)\textsuperscript{k}E. These letters refer to the steps carried 
+        out in implementation -- \textit{Predict, Evaluate (derivative), 
+        Correct, Evaluate (derivative)}. For the purposes of this project, all 
         predictor-correctors followed the PECE structure to simplify 
         implementation.
 
         It is common for Adams-Bashforth and Adams-Moulton methods to be used
-        as a predictor corrector pair. In this project, we also consider the 
+        as a predictor corrector pair. We will also be considering the 
         Forward-Backward Euler, Heun and Leapfrog-BDF2 pairings.
 
 
@@ -685,15 +713,15 @@
         \begin{equation}
         \label{eq:2_milnes_device}
             \text{LTE} \approx \frac{C_{p+1}}{C_{p+1} - C_{p+1}^*} 
-            \abs{\mathbf{u_{i+1} - u_{i+1}^*}},
+            (\mathbf{u_{i+1} - u_{i+1}^*}),
         \end{equation}
-        where $p$ is the order of our scheme, $C_{p+1}, C_{p+1}^*$s are the 
-        error constants for the predictor and corrector respectively and the 
-        absolute value is element-wise (not the euclidean length). 
+        where $p$ is the order of our scheme and $C_{p+1}, C_{p+1}^*$ are the 
+        error constants for the predictor and corrector respectively). 
 
         This error estimate allows us to optimise our computations so that when
         our LTE is high we can \textit{decrease} our step-size to reduce our 
-        error and \textit{increase} our step size when our LTE is low. We will be adapting our step-size using the formula,
+        error and \textit{increase} our step size when our LTE is low. We will 
+        be adapting our step-size using the formula,
         \begin{equation}
         \label{eq:adapt}
             h_{i+1} = h_i \left(\frac{\text{tol}} 
@@ -710,6 +738,253 @@
             \item{interpolate backwards to evaluate values of $\mathbf{u}$
             using this step's fixed $h$.}
         \end{enumerate}
+        In our implementation, we used (i) by deriving adaptive step schemes
+        using Lagrange interpolation (see Appendix ??).
+
+
+\chapter{Design \& Implementation}
+\label{3_implementation}
+    \section{Choice of Python}
+    \label{3_python}
+        The numerical methods discussed in Chapter \ref{2_methods} were 
+        implemented in Python primarily due to its \textit{NumPy} package
+        and extensive \textit{Matplotlib} graphing capabilities. 
+
+        NumPy provides many optimised vector operations in the box which 
+        overload standard binary operations. This allows for flexible code 
+        which need not distinguish between vector or scalar operations, 
+        helping to maintain a higher-lever approach when programming.
+
+        As mentioned in \ref{2_backward_euler}, we use another python package
+        \textit{SciPy} for its modified Powell hybrid method to solve our
+        non-linear equations in implicit methods. 
+
+        Clearly, our algorithms would run faster if they were implemented in a
+        lower level language such as C/C++, but the focus of the project was to
+        investigate the different methods rather than implementing them in the 
+        most performant way. 
+
+
+    \section{Object-Oriented Design}
+    \label{3_oo}
+        Since our methods have most of the same requirements as each other, an 
+        object-oriented approach was chosen to maximise code reuse. In this 
+        design, we give each method their own class which is itself the child 
+        of some \textit{abstract} class which inherits directly from the 
+        \textit{abstract Solver} class. 
+
+        Figure \ref{3_uml} shows a reduced representation of the inheritance
+        structure of our different \textit{Solver} classes (where the 
+        \mintinline{python}{ForwardEulerSolver} and 
+        \mintinline{python}{LeapfrogSolver} are just examples of 
+        \mintinline{python}{OneStepSolver} and 
+        \mintinline{python}{MultiStepSolver}'s children). 
+
+        \begin{figure}[H]
+            \centering
+                \includegraphics[width=0.9\columnwidth]{uml_diagram}
+                \caption{UML diagram of Solver class heirarchy}
+                \label{3_uml}
+        \end{figure}
+
+        Following Section \ref{2_methods}, we categorised our numerical
+        methods into one-step and multi-step methods, which appeared a natural 
+        way to split our class definitions. The major difference between
+        \mintinline{python}{OneStepSolver} and 
+        \mintinline{python}{MultiStepSolver} is that in the latter class we 
+        cache our function evaluations between iterations. 
+
+        Aside from predictor-corrector pairs, when comparing two methods we 
+        see that they semantically only differ in their iterative scheme 
+        (implemented in the \mintinline{python}{calculate_next_values} 
+        and\linebreak \mintinline{python}{single_iteration} methods). 
+        Therefore all methods share the same \mintinline{python}{solve} which 
+        is inherited from our \mintinline{python}{Solver} class. 
+
+        \begin{listing}[H]
+            \begin{minted}{python}
+                def solve(self):
+                    while self.current_time <= self.end_time:
+                        self.forward_step(step_counter)
+
+                    self.solution = Solution(self.time_mesh, self.value_mesh)
+            \end{minted}
+            \caption{
+            Outline of \mintinline{python}{solve} method for a \textit{Solver}}
+            \label{3_solve}
+        \end{listing}
+        
+        Since our \textit{Solver} classes have numerous `helper' instance 
+        variables the decision was made to produce a (lighter weight) 
+        \mintinline{python}{Solution} object which contains only the matrix of
+        results and time mesh. This allowed for a simpler reporting process
+        when wanting to graph results.
+
+        \mintinline{python}{OneStepSolver} and 
+        \mintinline{python}{MultiStepSolver} have
+        \mintinline{python}{forward_step} methods of the form,
+        \begin{listing}[H]
+            \begin{minted}{python}
+                def forward_step(self, step):
+                    # next_step_size is class property, so it can vary between steps
+                    this_h = self.next_step_size
+                    self.time_mesh[step] = self.time_mesh[step - 1] + this_h
+                    self.value_mesh[step] = self.calculate_next_values(step, this_h)
+                    self.derivative_mesh[step] = self.calculate_next_derivative(step)
+            \end{minted}
+            \caption{Outline of \mintinline{python}{forward_step} method for 
+                     a \textit{Solver}}
+            \label{3_forward_step}
+        \end{listing}
+        \noindent where the \mintinline{python}{OneStepMethod} class omits 
+        line 6.
+
+        Since Multi-step methods are not self starting,
+        \mintinline{python}{MultiStepSolver} objects are coupled with a 
+        \mintinline{python}{OneStepSolver} object when they are instantiated. 
+        If otherwise unspecified, the \textit{Classical Runge-Kutta} method 
+        \eqref{eq:rk4} is used.
+
+
+
+        \subsection{Predictor-Corrector Implementation}
+            Prior to the implementation of the predictor-corrector, standalone 
+            algorithms operated on the basis of calling their
+            \mintinline{python}{solve} method which, in turn, iteratively calls
+            instance methods, mutating the state of our \textit{solver} 
+            object. Calling methods to update instance variables is set out by
+            our \mintinline{python}{Solver} class.
+
+            Given that predictor-correctors are themselves \textit{solvers}, 
+            our class representation should reflect this. So 
+            \mintinline{python}{PredictorCorrectorSolver} is a 
+            child class of \mintinline{python}{Solver} (as shown in 
+            \ref{3_uml}). This means that the predictor-corrector has its own 
+            state. 
+
+            Definition \ref{2_pc_method} tells us that a predictor-corrector
+            is made up of an \textit{explicit-implicit} pair. It was decided 
+            that when constructing a 
+            \mintinline{python}{PredictorCorrectorSolver} object we 
+            pass it explicit and implicit solver objects which share the same
+            \mintinline{python}{ivp} attribute. One issue which arises from 
+            this design is that of \textit{ownership}. Since we are interested
+            in the predictor-corrector \textit{pair}, we want to ensure that we
+            are updating the \mintinline{python}{PredictorCorrectorSolver}'s 
+            state at each time step accordingly. We acheive this by giving all
+            solvers a static method \mintinline{python}{single_iteration} which
+            emulates the behaviour of the existing 
+            \mintinline{python}{compute_next_values} method. The fundamental 
+            difference between these methods is that in 
+            \mintinline{python}{single_iteration} we represent our current
+            state by passing method arguments and returning values--rather than
+            updating instance variables (like in 
+            \mintinline{python}{compute_next_values}). Figure \ref{3_pc_uml} 
+            briefly outlines these interactions.
+
+            \begin{figure}
+                \centering
+                    \includegraphics[width=0.6\columnwidth]{%
+                    predictor-corrector}
+                    \caption{UML diagram showing how 
+                    \mintinline{python}{PredictorCorrectorSolver} interacts 
+                    with its explicit (e.g. Leapfrog) and implicit 
+                    (e.g. Trapezoidal) objects}
+                    \label{3_pc_uml}
+            \end{figure}
+
+            These method calls all happen inside the 
+            \mintinline{python}{forward_step} method in a PECE manner 
+            (\ref{2_predictor_correctors}). The outline of the
+            \mintinline{python}{forward_step} method is shown in Listing 
+            \ref{3_pece}.
+            \begin{listing}[H]
+                \begin{minted}{python}
+                    def forward_step(self, step):
+                        self.current_time = self.time_mesh[step] \
+                                          = self.time_mesh[step - 1] + self.next_step_size
+                        # P: Prediction
+                        prediction = self.explicit_solver.single_iteration(self.value_mesh,
+                                                                           self.time_mesh,
+                                                                           step,
+                                                                           self.derivative_mesh)
+                        # E: Evaluation
+                        derivative = self.ivp.ode.function(prediction, self.current_time)
+                        self.update_current_state(step_counter, prediction, derivative)
+                        # C: Correction
+                        correction = self.implicit_solver.single_iteration(self.value_mesh,
+                                                                           self.time_mesh,
+                                                                           step,
+                                                                           self.derivative_mesh)
+                        # E: Evaluation
+                        derivative = self.ivp.ode.function(correction, self.current_time)
+                        self.update_current_state(step_counter, correction, derivative, lte_approx)
+                \end{minted}
+                \caption{Outline of 
+                \mintinline{python}{PredictorCorrectorSolver.forward_step}}
+                \label{3_pece}
+            \end{listing}
+
+        \subsection{Adaptive Step-Size Implementation}
+        \label{3_adaptive}
+            To allow for adaptive step-sizes, \textit{Milne's Device} was used
+            to estimate our LTE from a given prediction-correction pair and was
+            implemented in \mintinline{python}{milnes_device}. We can append
+            Listing \ref{3_pece} with
+            \begin{listing}[H]
+                \begin{minted}[firstnumber=20]{python}
+                    lte_approx = self.milnes_device(prediction, correction)
+                    if self.adaptive:
+                        self.step_size = self.adapt_step(self.step_size, lte_approx, self.step_tol)
+                \end{minted}
+                \caption{Adaptive Step snippet from 
+                \mintinline{python}{PredictorCorrectorSolver.forward_step}}
+                \label{3_adaptive_forward}
+            \end{listing}
+            \noindent to enable adaptive step computations. The 
+            \mintinline{python}{adapt_step} method uses \eqref{eq:adapt} to
+            adjust the step size. This method also accomodates for catastrophic
+            floating point cancellation and ensures that step sizes are not 
+            increased by more than double their previous value.
+
+    \section{Graphs \& Case Study Animations}
+    \label{3_case_studies}
+        It was important to ensure that results from computations could be 
+        graphed and reported on in the same way. This would enable coherent
+        and reliable comparisons between methods' behaviours. 
+
+        For both the n-body problem and the double pendulum, animations were 
+        produced to help analyse the results of our computations. In both cases,
+        existing solutions (\cite{multicomet} \& \cite{pendulum}) where adapted
+        to better suit our case studies.
+
+        The n-body animation uses a modification of the built-in 
+        \mintinline{python}{comet} function in MATLAB. The pendulum and double
+        pendulum animations are built directly from an online example of the 
+        python graphing package \mintinline{python}{matplotlib}.
+
+\chapter{Comparison of Methods}
+\label{4_comparison}
+    
+\chapter{Case Studies}
+\label{5_case_studies}
+    \section{$n$-Body Problem}
+    \label{5_nbody}
+
+    \section{Pendula}
+    \label{pendula}
+
+\chapter{Reflection}
+\label{6_reflection}
+
+
+
+
+\clearpage
+\section{Deriving the Adaptive 2-step Adams-Bashforth Method}
+    \begin{equation}
+        e=mc^2
+    \end{equation}
 
 
 
@@ -766,6 +1041,16 @@
         A.~Iserles,
         ``A First Course in the Numerical Analysis of Differential Equations'',
         Cambridge University Press (1996).
+
+    \bibitem{multicomet}
+        ``https://uk.mathworks.com/matlabcentral/fileexchange/67945-multicometfade'',
+        ``Multiple MATLAB comet trajectory plots'',
+        February 2019.
+
+    \bibitem{pendulum}
+        ``https://matplotlib.org/gallery/animation/double\_pendulum\_sgskip.html'',
+        ``Double Pendulum matplotlib.animation example'',
+        March 2019.
 
 \end{thebibliography}
 \end{document}
