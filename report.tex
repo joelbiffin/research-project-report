@@ -43,6 +43,7 @@
 \usepackage{amsthm}
 
 \usepackage{enumitem}
+\usepackage{siunitx}
 
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -155,6 +156,7 @@
         whether or not they are unique. We will use Lipschitz continuity to do
         so.
         \begin{theorem}
+        \label{1_existence_uniqueness}
             Let $f(t,u)$ be a continuous function for all $u$ and $t \in 
             [a, b]$, and suppose that $f$ satisfies the Lipschitz condition,
             \begin{equation}
@@ -572,11 +574,12 @@
             \begin{align}
                 \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{2} 
                 (3\mathbf{f}(t_i, \mathbf{u}_i) - 
-                \mathbf{f}(t_{i-1},\mathbf{u}_{i-1})),\\
+                \mathbf{f}(t_{i-1},\mathbf{u}_{i-1}))
+                \label{2_ab2},\\
                 \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{12} 
                 (23\mathbf{f}(t_i, \mathbf{u}_i) - 
                 16\mathbf{f}(t_{i-1},\mathbf{u}_{i-1}) + 
-                5\mathbf{f}(t_{i-2}, \mathbf{u}_{i-2})).
+                5\mathbf{f}(t_{i-2}, \mathbf{u}_{i-2})) \label{2_ab3}.
             \end{align}
 
             Implicit Adams schemes are known as \textit{Adams-Moulton} 
@@ -595,11 +598,12 @@
             \begin{align}
                 \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{2} 
                 (\mathbf{f}(t_i, \mathbf{u}_i) + 
-                \mathbf{f}(t_{i+1},\mathbf{u}_{i+1})),\\
+                \mathbf{f}(t_{i+1},\mathbf{u}_{i+1})),
+                \label{eq:2_am1}\\
                 \mathbf{u}_{i+1} &= \mathbf{u}_{i} + \frac{h}{12} 
                 (5\mathbf{f}(t_{i+1}, \mathbf{u}_{i+1}) +
                 8\mathbf{f}(t_{i},\mathbf{u}_{i}) -
-                \mathbf{f}(t_{i-1}, \mathbf{u}_{i-1})).
+                \mathbf{f}(t_{i-1}, \mathbf{u}_{i-1}))\label{eq:2_am2}.
             \end{align}
 
             A $k$-step Adams-Moulton method is order $k+1$.
@@ -959,12 +963,202 @@
         to better suit our case studies.
 
         The n-body animation uses a modification of the built-in 
-        \mintinline{python}{comet} function in MATLAB. The pendulum and double
-        pendulum animations are built directly from an online example of the 
-        python graphing package \mintinline{python}{matplotlib}.
+        \mintinline{python}{comet} function in MATLAB. Bodies were represented
+        as point masses (as in Newton's Law of Gravition) and their displayed
+        sizes are not representative of the situation we are trying to model.
+        The pendulum and double pendulum animations are built directly from an 
+        online example in the documentation of the 
+        \mintinline{python}{matplotlib} package.
+
+        One added complexity with our animations was that when using variable
+        step results not all computed values could be used in animations due to
+        the memory load of doing so. For the purposes of animation this is
+        unimportant as their main purpose is to provide qualitative feedback on
+        the case study. This, however, does highlight a small flaw in the 
+        current implementation of our \textit{solvers}. As the number of 
+        iterations increase, we are putting much more load on the program's 
+        memory. The obvious solution to this would be to write results to disk
+        when we no longer require them. It was decided that the details of data
+        storage was unimportant for this project, so the initial approach 
+        was kept.
+
 
 \chapter{Comparison of Methods}
 \label{4_comparison}
+    
+    \section{Fixed Step-Size Methods}
+    \label{4_fixed}
+        Before diving deeper into analysing our predictor-corrector methods, it
+        is important to first compare the standalone methods which will later
+        make up our predictor-corrector pairs. We will be examining the 
+        running time, error accumulation and stability of our algorithms using 
+        IVPs with known analytical solutions.
+
+        \begin{example}
+        \label{4_example_1}
+            Consider the IVP,
+            \begin{equation}
+            \label{eq:4_ex_1}
+                \begin{cases}
+                    u'(t) = -\pi \sin(\pi t) + \pi \cos(2\pi t), \quad 
+                    \text{on } t \in [0,4],\\
+                    u(0) = 1,
+                \end{cases}
+            \end{equation}
+            whose analytic solution is given by $u(t)=\cos(\pi t)+ 
+            \frac{1}{2}\sin(2\pi t)$. Solutions to this IVP were computed
+            using the explicit solvers, \textit{Forward Euler} \eqref{eq:euler},
+            \textit{Adams-Bashforth 2-Step} \eqref{eq:ab2}, \textit{Leapfrog}
+            \eqref{eq:leapfrog}, and the implicit solvers, 
+            \textit{Backward Euler} \eqref{eq:backward_euler}, 
+            \textit{Trapezoidal} \eqref{eq:am1}, \textit{BDF-2} 
+            \eqref{eq:2_bdf2}. Figure \ref{4_graphs_1} shows us these results
+            along with their subsequent errors. 
+        \end{example}
+        \begin{figure}[H]
+            \centering
+                \includegraphics[width=\columnwidth]{%
+                1}
+                \caption{Numerical results for Example \ref{4_example_1}
+                using a fixed step size $h=0.08$.}
+                \label{4_graphs_1}
+        \end{figure}
+
+        We can see that both our Forward and Backward Euler methods are 
+        significantly less accurate than our other order 2 methods. Since our 
+        IVP is non-stiff, it is unsurprising to see that there is very little
+        overall difference between the errors in our explicit and implicit 
+        schemes. These computations were repeated 1000 times and the 
+        running-time of each algorithm's \mintinline{python}{solve} method 
+        was logged, producing a mean running-time for each scheme. 
+        \begin{table}
+            \centering
+                \begin{tabular}[H]{| l | l |}
+                    \hline
+                    Algorithm & Time /$\mu$s \\ \hline
+                    Forward Euler & 331 \\ \hline
+                    Adams-Bashforth 2-Step & 601 \\ \hline
+                    Leapfrog & 407 \\ \hline
+                    Backward Euler & 3036 \\ \hline
+                    Trapezoidal & 3627 \\ \hline
+                    BDF-2 & 5567 \\
+                    \hline
+                \end{tabular}
+                \caption{Running-times of algorithms in Example 
+                \ref{4_example_1}.}
+                \label{4_1_runtimes}
+        \end{table}
+        Table \ref{4_1_runtimes} shows that our implicit methods are running
+        approximately ten times slower than our explicit ones. Therefore due 
+        to Example \ref{4_example_1}'s lack of stiffness an explicit method
+        would allow us to minimise cost without sacrificing accuracy. 
+        
+        We could also apply some predictor-corrector pairs to the IVP
+        which would make improvements to the running-time of our implicit 
+        schemes in addition to improving their explicit-part's stability 
+        properties. The results of doing this are shown in Figure 
+        \ref{4_pc_graphs_1}. These results in addition to the figures shown
+        in Table \ref{4_pc_runtimes} help to highlight that 
+        predictor-corrector methods are an excellent way to maintain or even
+        increase accuracy without sacrifising much running-time.
+        \begin{figure}[H]
+            \centering
+                \includegraphics[width=\columnwidth]{1_pc}
+                \caption{Numerical results for Example \ref{4_example_1}
+                using Predictor-Corrector methods with fixed $h=0.08$.}
+                \label{4_pc_graphs_1}
+        \end{figure}
+
+        \begin{table}
+            \centering
+                \begin{tabular}[H]{| l | l | l |}
+                    \hline
+                    Predictor & Corrector & Time /$\mu$s \\ \hline
+                    Forward Euler & Backward Euler & 936 \\ \hline
+                    Forward Euler & Trapezoidal & 1061 \\ \hline
+                    Adams-Bashforth 2-Step & Trapezoidal & 1211 \\ \hline
+                    Leapfrog & BDF-2 & 1297 \\
+                    \hline
+                \end{tabular}
+            \label{4_pc_runtimes}
+            \caption{Running-times of Predictor-Corrector pairings in Example
+            \ref{4_example_1}.}
+        \end{table}
+
+        \begin{example}
+        \label{4_example_2}
+            Consider the IVP,
+            \begin{equation}
+            \label{eq:4_ex_2}
+                \begin{cases}
+                    u'(t) + u(t) = 50\sin (t), \quad 
+                    \text{on } t \in [0,1/2],\\
+                    u(0) = 1,
+                \end{cases}
+            \end{equation}
+            whose analytic solution is given by 
+            \begin{equation}
+            \label{eq:4_ex_sol_2}
+                u(t) = \frac{1}{2501} \left( 2551e^{-50t} + 2500\sin(t)
+                - 50\cos(t)  \right).
+            \end{equation}
+
+            Here we look to compare the results of some \textit{implicit} 
+            solvers on this stiff equation with those produced from some
+            \textit{predictor-corrector} pairs. The results from our 
+            computations are shown in Figure \ref{4_ex_2_graphs}.          
+        \end{example}
+        
+        \begin{figure}[H]
+            \centering
+                \includegraphics[width=\columnwidth]{2}
+                \caption{Numerical results from Example \ref{4_example_2} using
+                Implicit and Predictor-Corrector methods with a fixed 
+                $h=\num{20e-3}$.}
+                \label{4_ex_2_graphs}
+        \end{figure}
+
+        This example was chosen due to its \textit{local} stiffness in the 
+        range $(0.0, 0.1)$ which, although not dominating at a step-size of 
+        $h=\num{20e-3}$, in explicit solvers the characteristics of the solution
+        curve would not well be shown at this step size. In fact, we can see that
+        when Forward Euler is applied at this $h$ our solution drops in one step
+        to ${\sim}0$ and then increases in a psuedo-linear fashion advancing in an
+        opposite direction to that of the true solution curve. 
+
+        \begin{table}
+            \centering
+                \begin{tabular}[H]{| l | l |}
+                    \hline
+                    Algorithm & Time /$\mu$s \\ \hline
+                    Trapezoidal & 2101 \\ \hline
+                    BDF-2 & 2613 \\ \hline
+                    Forward Euler--Trapezoidal (Heun's) & 969 \\ \hline
+                    Adams-Bashforth 2-Step--Trapezoidal & 1074 \\
+                    \hline
+                \end{tabular}
+            \label{4_im_pc_runtimes}
+            \caption{Running-times of Predictor-Corrector pairings in Example
+            \ref{4_example_2}.}
+        \end{table}
+
+    \section{Adaptive Step-Size Methods}
+    \label{4_adaptive}
+        Practically speaking, this increase in stability is in fact 
+        significantly small and is really just an increase in accuracy. Chase
+        discusses in \cite{chase} how the stability of a predictor-corrector
+        is dominated by the predictor equation. With this in mind, it is 
+        clear that the most valuable characteristic of the predictor-corrector
+        methods discussed is our ability to inexpensively estimate our LTE
+        and therefore adapt our step size to keep errors below a given 
+        tolerance. Although this does not provide the most suitable of solvers
+        for stiff equations, it does at least mean that errors can somewhat 
+        automatically be kept at bay by decreasing the step-size. Also, we can
+        increase our step-size to avoid unnecessarily short steps when LTE is 
+        low.
+
+        
+        
     
 \chapter{Case Studies}
 \label{5_case_studies}
@@ -1051,6 +1245,12 @@
         ``https://matplotlib.org/gallery/animation/double\_pendulum\_sgskip.html'',
         ``Double Pendulum matplotlib.animation example'',
         March 2019.
+
+    \bibitem{chase}
+        P.E.~Chase
+        ``Stability Properties of Predictor-Corrector Methods for Ordinary 
+        Differential Equations'',
+        Journal of the ACM, p.457-468, October 1962
 
 \end{thebibliography}
 \end{document}
