@@ -63,10 +63,10 @@
 % page: 
 
 \title{
-    \large{Numerical Solution to the Initial Value Problem by a 
+    \Large{Numerical Solution to the Initial Value Problem by a 
     Predictor-Corrector Method:}\\
-    Applications to n-Body Problem and Pendula}
-\author{Joel Biffin}
+    Applications to n-Body Problem and Pendula\\~\\Third Year Project\\School of Computer Science\\BSc Computer Science \& Mathematics}
+\author{Joel Biffin \\ Supervisor: Dr. Milan Mihajlovic}
 \maketitle
 
 % A table of contents can be generated automatically as well:
@@ -132,8 +132,7 @@
         \end{equation}
         using vector quantities. It is worth noting that this is in the form of
         a 1st order system of differential equations, this is due to the fact 
-        we can reduce any $n$-th order equation to a system of first order ones
-        (see section ).
+        we can reduce any $n$-th order equation to a system of first order ones.
 
 
     \section{Where Do They Come From?}
@@ -759,8 +758,8 @@
         which need not distinguish between vector or scalar operations, 
         helping to maintain a higher-lever approach when programming.
 
-        As mentioned in \ref{2_backward_euler}, we use another python package
-        \textit{SciPy} for its modified Powell hybrid method to solve our
+        As mentioned in \ref{2_backward_euler}, we use another python package,
+        \textit{SciPy}, for its modified Powell hybrid method to solve our
         non-linear equations in implicit methods. 
 
         Clearly, our algorithms would run faster if they were implemented in a
@@ -787,7 +786,7 @@
         \begin{figure}[H]
             \centering
                 \includegraphics[width=0.9\columnwidth]{uml_diagram}
-                \caption{UML diagram of Solver class heirarchy}
+                \caption{UML diagram of Solver class hierarchy}
                 \label{3_uml}
         \end{figure}
 
@@ -822,7 +821,7 @@
         variables the decision was made to produce a (lighter weight) 
         \mintinline{python}{Solution} object which contains only the matrix of
         results and time mesh. This allowed for a simpler reporting process
-        when wanting to graph results.
+        when wanting to graph results and run animations.
 
         \mintinline{python}{OneStepSolver} and 
         \mintinline{python}{MultiStepSolver} have
@@ -843,11 +842,12 @@
         \noindent where the \mintinline{python}{OneStepMethod} class omits 
         line 6.
 
-        Since Multi-step methods are not self starting,
+        Since multi-step methods are not self starting,
         \mintinline{python}{MultiStepSolver} objects are coupled with a 
         \mintinline{python}{OneStepSolver} object when they are instantiated. 
         If otherwise unspecified, the \textit{Classical Runge-Kutta} method 
-        \eqref{eq:rk4} is used.
+        \eqref{eq:rk4} is used. Due to all implemented methods having order less
+        than 4, using this Runge-Kutta preserves asympotitic accuracy.
 
 
 
@@ -860,10 +860,10 @@
             our \mintinline{python}{Solver} class.
 
             Given that predictor-correctors are themselves \textit{solvers}, 
-            our class representation should reflect this. So 
+            our class representation should reflect this. So, 
             \mintinline{python}{PredictorCorrectorSolver} is a 
             child class of \mintinline{python}{Solver} (as shown in 
-            \ref{3_uml}). This means that the predictor-corrector has its own 
+            \ref{3_uml}), meaning that the predictor-corrector has its own 
             state. 
 
             Definition \ref{2_pc_method} tells us that a predictor-corrector
@@ -959,28 +959,33 @@
 
         For both the n-body problem and the double pendulum, animations were 
         produced to help analyse the results of our computations. In both cases,
-        existing solutions (\cite{multicomet} \& \cite{pendulum}) where adapted
+        existing solutions (\cite{multicomet} \& \cite{pendulum}) were adapted
         to better suit our case studies.
+
+        The pendulum and double pendulum animations are built directly from an 
+        online example in the documentation of the 
+        \mintinline{python}{matplotlib} package. To help make the historical trajectory of the pendulum masses more apparent,
+        coloured points were imposed on top of the original animation. The older
+        a historical point was, the more transparent it appeared on the screen.
 
         The n-body animation uses a modification of the built-in 
         \mintinline{python}{comet} function in MATLAB. Bodies were represented
         as point masses (as in Newton's Law of Gravition) and their displayed
-        sizes are not representative of the situation we are trying to model.
-        The pendulum and double pendulum animations are built directly from an 
-        online example in the documentation of the 
-        \mintinline{python}{matplotlib} package.
+        sizes are not representative of volumes of the bodies we are trying to model.
+        
 
         One added complexity with our animations was that when using variable
         step results not all computed values could be used in animations due to
-        the memory load of doing so. For the purposes of animation this is
-        unimportant as their main purpose is to provide qualitative feedback on
-        the case study. This, however, does highlight a small flaw in the 
+        the memory load of doing so. This, does highlight a small flaw in the 
         current implementation of our \textit{solvers}. As the number of 
-        iterations increase, we are putting much more load on the program's 
-        memory. The obvious solution to this would be to write results to disk
+        iterations increase, we are putting much more load on the program's access
+        to memory. The obvious solution to this would be to write results to disk
         when we no longer require them. It was decided that the details of data
         storage was unimportant for this project, so the initial approach 
-        was kept.
+        was kept. 
+
+        To account for adaptive-step outputs, a helper function was written to fit the
+        variably spaced results onto an equidistant mesh using linear interpolation.
 
 
 \chapter{Comparison of Methods}
@@ -988,7 +993,7 @@
     
     \section{Fixed Step-Size Methods}
     \label{4_fixed}
-        Before diving deeper into analysing our predictor-corrector methods, it
+        Before diving deeper into analysing our adaptive-step methods, it
         is important to first compare the standalone methods which will later
         make up our predictor-corrector pairs. We will be examining the 
         running time, error accumulation and stability of our algorithms using 
@@ -1025,7 +1030,7 @@
         \end{figure}
 
         We can see that both our Forward and Backward Euler methods are 
-        significantly less accurate than our other order 2 methods. Since our 
+        significantly less accurate than the order 2 methods. Since our 
         IVP is non-stiff, it is unsurprising to see that there is very little
         overall difference between the errors in our explicit and implicit 
         schemes. These computations were repeated 1000 times and the 
@@ -1071,13 +1076,13 @@
 
         \begin{table}
             \centering
-                \begin{tabular}[H]{| l | l | l |}
+                \begin{tabular}[H]{| l | l |}
                     \hline
-                    Predictor & Corrector & Time /$\mu$s \\ \hline
-                    Forward Euler & Backward Euler & 936 \\ \hline
-                    Forward Euler & Trapezoidal & 1061 \\ \hline
-                    Adams-Bashforth 2-Step & Trapezoidal & 1211 \\ \hline
-                    Leapfrog & BDF-2 & 1297 \\
+                    Algorithm & Time /$\mu$s \\ \hline
+                    Forward Euler---Backward Euler & 936 \\ \hline
+                    Forward Euler---Trapezoidal & 1061 \\ \hline
+                    Adams-Bashforth 2-Step---Trapezoidal & 1211 \\ \hline
+                    Leapfrog---BDF-2 & 1297 \\
                     \hline
                 \end{tabular}
             \label{4_pc_runtimes}
@@ -1138,7 +1143,7 @@
                     \hline
                 \end{tabular}
             \label{4_im_pc_runtimes}
-            \caption{Running-times of Predictor-Corrector pairings in Example
+            \caption{Running-times of implicit and predictor-corrector methods in Example
             \ref{4_example_2}.}
         \end{table}
 
@@ -1157,28 +1162,414 @@
         increase our step-size to avoid unnecessarily short steps when LTE is 
         low.
 
-        
-        
+        \begin{example}
+        \label{4_example_3}
+            Consider the IVP,
+            \begin{equation}
+            \label{eq:4_ex_3}
+                \begin{cases}
+                    u'(t) + 5u(t) = 2\cos(t) + \sin(5t), \quad 
+                    \text{on } t \in [0,4],\\
+                    u(0) = 1,
+                \end{cases}
+            \end{equation}
+            which has the analytical solution,
+            \begin{equation}
+                u(t) = \frac{93}{130} e^{-5t} + 
+                \frac{1}{13}\left ( \sin(t) + 5\cos(t)  \right) +
+                \frac{1}{10}\left ( \sin(5t) - \cos(5t) \right).
+            \end{equation}
+            The motivation behind this example is to combine a transient stiff
+            decay with periodic functions with multiple extrema. Recall that 
+            step-sizes are adapted by \eqref{eq:adapt}. For our comparison we 
+            will be running computations at different tolerances---the idea
+            being that we want to keep cost low without sacrificing our 
+            accuracy. 
+        \end{example}
+        \begin{figure}[H]
+            \centering
+                \includegraphics[width=0.9\columnwidth]{3_steps_vs_tol}
+                \caption{Log-scale plot of steps taken versus tol in Example 
+                \ref{4_example_3}.}
+                \label{4_ex3_steps}
+        \end{figure}
+
+        Figure \ref{4_ex3_steps} shows us how the number of steps taken is
+        affected by changing the user defined tolerance. It is clear that 
+        the methods which minimise the number of steps while maintining a good
+        level of accuracy are the \textit{Forward Euler--Trapezoidal} pair, 
+        \textit{Adams-Bashforth 2-Step--BDF-2} pair and the 
+        \textit{Adams-Bashforth 2-Step--Trapezoidal} pair. 
+
+        \begin{figure}
+            \centering
+                \includegraphics[width=\columnwidth]{3}
+                \caption[caption]{Numerical results from Example 
+                \ref{4_example_3} using Adaptive-Step methods with (left-right) \\
+                $\text{tol}\in\lbrace\num{5e-3},\num{1e-3},
+                \num{5e-4}\rbrace$.}
+                \label{4_ex_3_graphs}
+        \end{figure}
+
+        Something of note, and perhaps surprising, is that no method pairings
+        which used the \textit{Leapfrog} solver were `step efficient' despite 
+        it being a second order method. This is emphasised by the third most
+        `step efficient' method using the first order \textit{Forward Euler}
+        method. 
+
+
     
 \chapter{Case Studies}
 \label{5_case_studies}
+    \section{Pendula}
+    \label{5_pendula}
+        One simple but very powerful application of our numerical algorithms
+        is in the solving of physical models arising from the application of
+        Newton's 2nd Law. A mass hanging from an inextensible, weightless
+        rod, a \textit{Pendulum}, is such an example of this.
+
+        \subsection{Simple Pendulum}
+        \label{5_simple_pendulum}
+            The simple pendulum is a simple harmonic motion model of a
+            pendulum, i.e. no damping considerations are present in the model.
+
+            Consider the diagram in Figure \ref{5_simple_diag} where the rod
+            has length $l$. 
+            \begin{figure}[H]
+                \centering
+                    \includegraphics[width=0.25\columnwidth]{simple_pendulum}
+                    \caption[caption]{Force diagram of Simple Pendulum.}
+                    \label{5_simple_diag}
+            \end{figure} 
+
+            We see that since the rod is inextensible, the pendulum must be
+            in equilibrium through the axis of the rod but the bob has a 
+            resultant force in the axis orthogonal to the rod. Using this we
+            apply Newton's 2nd Law of motion and the arc length equation to
+            attain our differential equation. 
+            \begin{equation}
+            \label{eq:shm}
+                \ddot{\theta}(t) + \frac{g}{l}\sin(\theta) = 0, \quad g \text{ is 
+                acceleration due to gravity.}
+            \end{equation}
+            As mentioned in \ref{1_ivp}, we can use the reduction of order
+            method to reduce this into a system of 1st order ODEs by 
+            introducing the variable $\omega$.
+            \begin{equation}
+            \label{eq:shm_system}
+                \begin{cases}
+                    \dot{\theta} = \omega, \\
+                    \dot{\omega} = -\frac{g}{l}\sin(\theta).
+                \end{cases}
+            \end{equation}
+
+            Coupled with the initial value condition, $(\theta, \omega)
+            =(\frac{\pi}{4}, 0)$, numerical solutions were produced using the
+            adaptive \textit{Adams-Bashforth 2-Step--Trapezoidal} pair with
+            tol$=\num{1e-4}$. Results were represented using the 
+            \mintinline{python}{matplotlib} animation (\ref{3_case_studies}).
+            
+            It is known that the period of oscillation for a simple pendulum
+            is $T = 2\pi \sqrt{\frac{l}{g}}$, so we can verify our results
+            using this fact. $g$ was taken to be $9.80665$ms$^{-1}$, and the 
+            length of the rod $l=10$m so the theoretical period value is 
+            $T = 2\pi \sqrt{\frac{10}{9.80665}} = 6.345$ (4 significant
+            digits). It is easy to see from figure \ref{5_simple_animations} 
+            that this aligns with our numerical solution.
+
+            \begin{figure}[H]
+                \centering
+                    \includegraphics[width=\columnwidth]{1_shm}
+                    \caption{Screenshots from animation of results for Simple
+                    Pendulum from \ref{5_simple_pendulum}.}
+                    \label{5_simple_animations}
+            \end{figure}
+
+        \subsection{Double Pendulum}
+        \label{5_double_pendulum}
+            At face value, attaching a similiar pendulum in series to our
+            simple pendulum is not a complex task. On the contrary, this 
+            small addition gives us a much more complex system. This system is
+            said to be \textit{dynamical} and given certain initial conditions 
+            the system's motion is chaotic. Figure \ref{5_double_diag}
+            shows the naming conventions and model diagram.
+
+            \begin{figure}[H]
+                \centering
+                    \includegraphics[width=0.3\columnwidth]{double_pendulum}
+                    \caption{Diagram showing the Double Pendulum model.}
+                    \label{5_double_diag}
+            \end{figure}
+
+            Modelling this problem is much more involved and 
+            requires the use of Lagrangians which are outside of the scope
+            of this report. For this reason we will neither include the 
+            derivation of our ODEs nor the reduction of order method to form 
+            our 1st order system. The resulting system is given by,
+            \begin{equation}
+            \label{eq:double_pendulum_odes}
+                \begin{cases}
+                    \dot{\theta_1} = \omega_1,\\
+                    \dot{\theta_2} = \omega_2,\\
+                    \dot{\omega_1} = \frac{-g (2 m_1 + m_2) \sin{\theta_1} - m_2 g \sin(\theta_1 - 2 \theta_2) - 2 \sin(\theta_1 - \theta_2) m_2 (\omega_2^2 L_2 + \omega_1^2 L_1 \cos(\theta_1 - \theta_2))}{L_1 (2 m_1 + m_2 - m_2 \cos(2 \theta_1 - 2 \theta_2))},\\
+                    \dot{\omega_2} = \frac{2 \sin(\theta_1 - \theta_2)(\omega_1^2 L_1 (m_1 + m_2) + g (m_1 + m_2) \cos{\theta_1} + \omega_2^2 L_2 m_2 \cos(\theta_1 - \theta_2))}{L_2 (2 m_1 + m_2 - m_2 \cos(2 \theta_1 - 2 \theta_2))},
+                \end{cases}
+            \end{equation} 
+            and we will couple this with different initial conditions to 
+            demonstrate the different types of behaviour of the system.
+
+            For a dynamical system, a critical point is one which--if taken to
+            be the initial condition--the derivative evalated there is zero.
+            With inspiration from \cite{mit}, we will be computing solutions
+            to our system of ODEs coupled initial conditions which reside
+            very close to critical points.
+
+            \begin{example}
+            \label{5_double_1}
+                Consider the IVP, \eqref{eq:double_pendulum_odes} where 
+                $l_1=4, l_2=2, m_1=m_2=2$ and
+                \begin{equation}
+                    \begin{bmatrix}
+                        \theta_1(0)\\
+                        \theta_2(0)\\
+                        \omega_1(0)\\
+                        \omega_2(0)
+                    \end{bmatrix}
+                    = 
+                    \begin{bmatrix}
+                        0\\ 0\\ \pi/16\\ \pi/12.\\
+                    \end{bmatrix}
+                \label{eq:double_ics}
+                \end{equation}
+
+                Note that we have perturbed our known \textit{stable} critical 
+                point, $[0, 0, 0, 0]^T$, by an angular velocity of 
+                $[\omega_1, \omega_2]=[\frac{\pi}{16}, \frac{\pi}{12}]$.
+ 
+                Note that this is a small perturbation from the known stabile critical
+                point at $[0, 0, 0, 0]^T$. Using the AB2-Trapezoidal pair with 
+                a $\text{tol}=\num{5e-5}$ why produced an animation of our 
+                model (screenshots in Figure \ref{5_double_1_an}).
+            \end{example}
+
+            \begin{figure}[H]
+                \centering
+                    \includegraphics[width=\columnwidth]{double_1}
+                    \caption{Screenshots from animation running Example 
+                    \ref{5_double_1}.}
+                    \label{5_double_1_an}
+            \end{figure}
+
+            Here we can see that the subsequent motion is periodic---all models
+            were run for 10 minutes to help ensure type of behaviour seen. It is 
+            interesting that a an initial condition comprising of a slight 
+            perturbation from a stable critical point 
+            yields a periodic solution. Raising the question, \textit{could it 
+            be said that a large perturbation would not produce motion like 
+            this?}
+
+            \begin{example}
+            \label{5_double_2}
+                Consider the IVP, \eqref{eq:double_pendulum_odes} where 
+                $l_1=4, l_2=2, m_1=m_2=2$ and
+                \begin{equation}
+                    \begin{bmatrix}
+                        \theta_1(0)\\
+                        \theta_2(0)\\
+                        \omega_1(0)\\
+                        \omega_2(0)
+                    \end{bmatrix}
+                    = 
+                    \begin{bmatrix}
+                        0\\ 0\\ \frac{\pi}{8}\\ \frac{3\pi}{4}\\
+                    \end{bmatrix}
+                \label{eq:double_ics_2}
+                \end{equation}
+
+                This time, we perturb the initial condition by a greater angular
+                velocity but, geometrically, the system starts from the stable 
+                critical point. Screenshots from the animation are shown in 
+                Figure \ref{5_db2}.
+            \end{example}
+
+            Our results demonstrate that despite appearing to be periodic, the 
+            phase shift between $\theta_1$ and $\theta_2$ is constantly changing
+            due to $m_1, m_2$'s respective weights driving each other. So, the
+            resulting motion is unpredictable, especially when considering the 
+            turning points for $m_1$.
+
+            \begin{figure}
+                \centering
+                    \includegraphics[width=\columnwidth]{double_2}
+                    \caption{Screenshots from animation running Example 
+                    \ref{5_double_2}.}
+                    \label{5_d2}
+            \end{figure}
+
+            \begin{example}
+                \label{5_double_3}
+                Consider the IVP, \eqref{eq:double_pendulum_odes} where 
+                $l_1=4, l_2=2, m_1=m_2=2$ and
+                \begin{equation}
+                    \begin{bmatrix}
+                        \theta_1(0)\\
+                        \theta_2(0)\\
+                        \omega_1(0)\\
+                        \omega_2(0)
+                    \end{bmatrix}
+                    = 
+                    \begin{bmatrix}
+                        \pi\\ \pi\\ \frac{\pi}{16}\\ 0\\
+                    \end{bmatrix}
+                \label{eq:double_ics_3}
+                \end{equation}
+
+                The motivation behind this example is to sample the type of
+                behaviour stemming from a slight perturbation at an unstable
+                critical point. Here we have geometrically started at the
+                unstable point $[0, 0]^T$. 
+            \end{example}
+
+            This system's behaviour (Figure \ref{5_d3}) is highly chaotic. 
+            This suggests that perturbing an unstable fixed point can lead to
+            nonlinear chaotic motion.
+
+            \begin{figure}[H]
+                \centering
+                    \includegraphics[width=\columnwidth]{double_3}
+                    \caption{Screenshots from animation running Example 
+                    \ref{5_double_3}.}
+                    \label{5_d3}
+            \end{figure}
+
     \section{$n$-Body Problem}
     \label{5_nbody}
+        From Newton's Law of Gravitation we can derive systems of ODEs relating the
+        acceleration of $n$-massive objects. This, in combination with a known 
+        initial condition, gives an IVP appropriate for solution by our discussed
+        methods.
 
-    \section{Pendula}
-    \label{pendula}
+        \subsection{2-Body Problem}
+        \label{5_2body}
+            The (planar) two body problem describes the interaction of 2 massive particles
+            acting as point masses under an attractive force. We can simply derive
+            the system of ODEs directly from Newton's law. The system is given by,
+            \begin{equation}
+                \begin{cases}
+                    \ddot{\mathbf{r}}_{1} = \frac{-Gm_2(\mathbf{r}_1 - \mathbf{r}_2)}{\abs{\mathbf{r}_1 - \mathbf{r}_2}}^3,\\
+                    \ddot{\mathbf{r}}_{2} = \frac{-Gm_1(\mathbf{r}_2 - \mathbf{r}_1)}{\abs{\mathbf{r}_2 - \mathbf{r}_1}}^3,
+                \end{cases}
+            \label{eq:2_bod}
+            \end{equation}
+            where $\mathbf{r}_i$ is the cartesian position vector for body $i$ and $G$ is 
+            the universal gravitational constant. 
+
+            \begin{example}
+                Consider the IVP, \eqref{eq:2_bod} with the initial conditions 
+                representing the Earth and the Moon where $m_1 = \num{7.3478e22},\quad m_2 = \num{5.972e24}$ and 
+                \begin{equation}
+                    \mathbf{r}_1(0)=    
+                    \begin{bmatrix}
+                        \num{384400e3} \\ 0
+                    \end{bmatrix},
+                    \quad
+                    \mathbf{r}_2(0)=
+                    \begin{bmatrix}
+                        0 \\ 0
+                    \end{bmatrix},
+                    \dot{\mathbf{r}}_1(0)=
+                    \begin{bmatrix}
+                        \num{1023} \\ 0
+                    \end{bmatrix},
+                    \quad
+                    \dot{\mathbf{r}}_2(0)=
+                    \begin{bmatrix}
+                        0 \\ 0
+                    \end{bmatrix}.
+                \end{equation}
+                \label{5_ivp2}
+            \end{example}
+
+            Running our MATLAB animation on the results from Example \ref{5_ivp2}
+            gives us the expected orbit of the Moon around the Earth with the expected
+            28 day time period. Also, we can see that the attractive force of the Moon
+            acting on the Earth is considerable and influences its position. Figure
+            \ref{5_2_bod_an} provides screenshots of this animation.
+
+            \begin{figure}[H]
+                \centering
+                    \includegraphics[width=\columnwidth]{2-body}
+                    \caption{Screenshots from animation running Example 
+                    \ref{5_ivp2}.}
+                    \label{5_2_bod_an}
+            \end{figure}
+
+        \subsection{3-Body Problem}
+        \label{5_3_body}
+            This model can further be extended to include a third body (in fact, it can
+            be extended to include up to $n$ bodies). The ODE system which represents such
+            a model is derived in the same manner as the 2-body problem. The difference
+            being that a given body $a$ will be influenced by the attraction from both body $b$
+            \textit{and} body $c$. 
+
+            As with the double pendulum, this seemingly-slight increase in complexity
+            of our model in fact provides us with a much more complex dynamical system. 
+            Figure \ref{3_body} shows us an example of the type of complex motion which 
+            our 3-body system can produce
+
+            \begin{figure}[H]
+                \centering
+                    \includegraphics[width=\columnwidth]{3-body}
+                    \caption{Screenshots from 3-body solution with equally massive bodies.}
+                    \label{3_body}
+            \end{figure}
+
+            While there are a few special case solutions for the restricted 3-body problem, 
+            it is known for some sets of initial conditions, the 3-body problem 
+            can too demonstrate chaotic behaviour. 
 
 \chapter{Reflection}
 \label{6_reflection}
+    \section{Subject Specific Comments}
+        After deeply investigating the behaviour of adaptive step predictor-corrector
+        methods, as well as linear multistep methods in general, it is clear that they posses
+        excellent properties which make them excellent candidates for producing numerical 
+        solutions to IVPs. 
 
+        In terms of suitability of \textit{specific} numerical methods for problems, it
+        seems that more research is needed in the stability analysis of adaptive step 
+        predictor-corrector pairings. In particular, how the choice of predictor and the 
+        method of adapting the step-size affect the stability regions. Despite the popularity
+        of many codes which implement generalised linear methods (see \ref{future}), it seems
+        that more could be done to choose methods based on a problem's stability. In turn,
+        this would decrease the number of steps required to solve \textit{stiff} equations
+        and hence reduce cost.
 
+        \subsection{Future Work}
+        \label{future}
+            This implementation of predictor-corrector methods was designed to focus 
+            on the specific characteristics
+            of an algorithm and to gain a thorough academic understanding of the limitations and 
+            use cases for it. The next natural progression would be to use this 
+            knowledge to implement generalised methods. These would contain a family of 
+            predictors and a family of correctors and be implemented in such a way as to interchange
+            between different order methods dependent on error-estimates and stability of a problem.
 
+    \section{Planning \& Organisation}
+        Due to the academic nature of the project, it was at first very difficult to set deadlines
+        and monitor current progress due to the fundamental understanding required to make design decisions. 
+        After a month of reading as much material as possible it was 
+        only then that I had a greater idea of the subject area and from then I was able
+        to make decisions on what approach to take. It was then that I decided to focus on 
+        understanding the rigorous numerical analysis behind the algorithms before designing any software. 
+        Something that helped the end result's implementation was writing small imperative programs
+        to investigate a method.
 
-\clearpage
-\section{Deriving the Adaptive 2-step Adams-Bashforth Method}
-    \begin{equation}
-        e=mc^2
-    \end{equation}
+        In hindsight, perhaps too much time was spent in the analysis area and a little more time should have
+        been spent on implementing higher order methods. There were times where 
+        it took 4 or 5 failed derivation attempts before using a formula from a textbook/paper.
+        In spite its negatives, this approach did give me a much deeper understanding 
+        of the subject area and helped to preemptively make better design decisions. 
 
 
 
@@ -1251,6 +1642,32 @@
         ``Stability Properties of Predictor-Corrector Methods for Ordinary 
         Differential Equations'',
         Journal of the ACM, p.457-468, October 1962
+
+    \bibitem{bornemann}
+        P.~Deuflhard, F.~Bornemann,
+        ``Scientific Computing with Ordinary Differential Equations'',
+        Springer, New York (2002).
+
+    \bibitem{mit}
+        S.~Dharmaraja,
+        ``https://dspace.mit.edu/bitstream/handle/1721.1/41736/225094125-MIT.pdf'',
+        September 2007.
+
+    \bibitem{or}
+        ``https://www.ucolick.org/~laugh/oxide/projects/burrau.html'',
+        ``Discussion on 3-body problem'',
+        April 2019.
+
+    \bibitem{dsf}
+        ``http://www.phys.lsu.edu/faculty/gonzalez/Teaching/Phys7221/ThreeBodyProblem.pdf'',
+        ``Text on 3-body problem'',
+        April 2019.
+
+
+    \bibitem{pl}
+        ``https://www.universetoday.com/34024/mass-of-the-planets/'',
+        ``Planetary masses'',
+        April 2019
 
 \end{thebibliography}
 \end{document}
